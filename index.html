@@ -64,7 +64,11 @@ README</a> for the spec question this raises.
 const SHIFT_S = 3.0;            // empty-edit duration
 const FLASH_MEDIA_S = 1.0;      // flash position in the video media
 const BEEP_PRES_S = 4.0;        // audio beep presentation time (currentTime); fixed reference
-const IS_CHROMIUM = /Chrome\//.test(navigator.userAgent) && !/Firefox/.test(navigator.userAgent);
+// Show the non-MSE control player everywhere EXCEPT Firefox. Chrome and Safari
+// both apply this offset in <video src>, so the control sits in sync next to the
+// out-of-sync MSE player (the point). Firefox's progressive path drops the offset,
+// which would confuse, so it is hidden there with a note.
+const IS_FIREFOX = /Firefox/.test(navigator.userAgent);
 
 const VMIME = 'video/mp4; codecs="avc1.42c00d"';
 const AMIME = 'audio/mp4; codecs="mp4a.40.2"';
@@ -189,16 +193,17 @@ function render() {
 
 document.getElementById('go').onclick = () => {
   startMSE();
-  if (IS_CHROMIUM) {
+  if (!IS_FIREFOX) {
     startDirect();
   } else {
     document.getElementById('videoD').style.display = 'none';
     document.getElementById('tlD').style.display = 'none';
     const n = document.getElementById('noteD');
     n.style.display = 'block';
-    n.textContent = 'The non-MSE control is shown in Chromium only. Firefox’s progressive video.src path drops '
-      + 'this same offset (a separate quirk unrelated to the MSE behavior on the left), so showing it here would only '
-      + 'distract. The point of this page is the MSE player, which Firefox handles correctly.';
+    n.textContent = 'The non-MSE control is hidden in Firefox only. Firefox’s progressive video.src path drops '
+      + 'this same offset (a separate quirk, opposite to Chrome and Safari, and unrelated to the MSE behavior on '
+      + 'the left), so it would only distract here. The point of this page is the MSE player, which Firefox handles '
+      + 'correctly. Chrome and Safari show the control, where it plays in sync next to the out-of-sync MSE player.';
   }
 };
 window.__reproReady = true;

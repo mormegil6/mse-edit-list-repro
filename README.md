@@ -54,8 +54,8 @@ offset, measured on the bytes in `dash/`; it does not test the non-empty trim ca
 Click **Start**. Under each player an event timeline prints when the video flash
 and the audio beep occur. If the offset was applied, the flash reads at 4.0 s, on
 the beep (in sync); if it was dropped, the flash reads at 1.0 s, 3 s before the
-beep. A badge states the result. The non-MSE control player is shown in Chromium
-only (see "the control player" below).
+beep. A badge states the result. The non-MSE control player is shown in every
+browser except Firefox (see "the control player" below).
 
 A companion page,
 [**`/progressive.html`**](https://mormegil6.github.io/mse-edit-list-repro/progressive.html),
@@ -104,15 +104,29 @@ $ MP4Box -diso dash/init-stream0.m4s    # <EditListEntry Duration="3000" MediaTi
 
 Both players receive the identical encoded media; only the delivery path differs.
 
-## The control player (Chromium only), and a Firefox note
+## The control player (shown in every browser except Firefox)
 
-The `<video src>` control is shown in Chromium only. Its job there is to prove the
-media is fine outside MSE: Chromium applies the offset on the same file when it is
-not going through `appendBuffer`. In Firefox it is hidden, because Firefox's
-progressive `<video src>` path *drops* the offset (a separate quirk, opposite to
-Chromium's progressive path and unrelated to the MSE behavior this report is
-about); showing it there would only distract. Judge each player on its own
-flash-vs-beep, never one player against the other.
+The `<video src>` control proves the media is fine outside MSE. In both Chrome and
+Safari, `<video src>` applies the offset on the same file, so the control plays in
+sync right next to the out-of-sync MSE player, which is the point. It is hidden in
+Firefox only, whose progressive `<video src>` path *drops* the offset (a separate
+quirk, opposite to Chrome and Safari); showing it there would only distract. Judge
+each player on its own flash-vs-beep, never one player against the other.
+
+The full picture, per engine and delivery path, on the identical bytes (measured;
+"applies" = flash lands on the beep, `duration` 8 s; "drops" = flash 3 s early,
+`duration` 5 s):
+
+| engine | MSE (`appendBuffer`) | non-MSE (`<video src>`) |
+|---|---|---|
+| Chrome / Blink | drops | applies |
+| Safari / WebKit | drops | applies |
+| Firefox / Gecko | applies | drops |
+
+Every engine is internally inconsistent between its own two paths, and no two
+engines agree on both. In Chrome and Safari, MSE is the deviant path: it drops an
+offset the same engine honors in normal `<video src>` playback. That is the core of
+the report.
 
 One implementation detail: when the offset is applied through MSE, the video
 `SourceBuffer` has an empty gap `[0, 3 s]` at the front, and some engines (Firefox)
