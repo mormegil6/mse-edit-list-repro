@@ -22,7 +22,7 @@
 			</Representation>
 		</AdaptationSet>
 		<AdaptationSet id="1" contentType="audio" startWithSAP="1" segmentAlignment="true" bitstreamSwitching="true" lang="und">
-			<Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.2" bandwidth="5888" audioSamplingRate="48000">
+			<Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.2" bandwidth="6212" audioSamplingRate="48000">
 				<AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="1" />
 				<SegmentList timescale="1000000" duration="4021333" startNumber="1">
 					<Initialization sourceURL="init-stream1.m4s" />

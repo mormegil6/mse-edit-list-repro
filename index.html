@@ -4,56 +4,69 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
-<title>Chromium MSE ignores a track edit list (edts/elst)</title>
+<title>MSE: empty-edit (elst) presentation offset not applied in Chromium</title>
 <style>
   body { font: 15px/1.55 system-ui, sans-serif; max-width: 940px; margin: 24px auto; padding: 0 16px; color: #111; background: #fff; }
-  h1 { font-size: 21px; margin-bottom: 4px; }
-  #verdict { font-size: 17px; font-weight: 700; padding: 12px 14px; border-radius: 8px; background: #f3f3f3; margin: 16px 0; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  #verdict { font-size: 16px; font-weight: 700; padding: 12px 14px; border-radius: 8px; background: #f3f3f3; margin: 16px 0; }
   .bug { color: #b00020; } .ok { color: #087f23; }
   .players { display: flex; gap: 24px; flex-wrap: wrap; }
   .p { flex: 1; min-width: 320px; }
   video { width: 320px; height: 240px; background: #000; border: 1px solid #ccc; display: block; }
-  .read { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; white-space: pre; margin-top: 8px; background: #fafafa; border: 1px solid #eee; padding: 8px; }
+  .badge { font-weight: 700; font-size: 13.5px; margin-top: 6px; padding: 5px 8px; border-radius: 5px; display: inline-block; min-height: 1em; }
+  .badge.good { background: #e6f4ea; color: #087f23; }
+  .badge.bad  { background: #fce8e8; color: #b00020; }
+  .read { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre; margin-top: 6px; background: #fafafa; border: 1px solid #eee; padding: 7px; color: #333; }
   button { font-size: 15px; padding: 9px 16px; margin: 6px 8px 6px 0; }
   code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; }
   .note { color: #444; font-size: 13.5px; }
 </style>
 </head>
 <body>
-<h1>Chromium MSE ignores a track's edit list (<code>edts</code>/<code>elst</code>)</h1>
+<h1>MSE does not apply an empty-edit (<code>elst</code>, <code>media_time = -1</code>) presentation offset</h1>
 <p class="note">
-The same media is played two ways in <b>this</b> browser. The video track carries a
-<b>1.0&nbsp;s empty edit</b> (a leading <code>elst</code> segment) that delays the picture by 1.0&nbsp;s;
-the audio track has no such edit. A white flash sits at video media-time&nbsp;0 and a 1&nbsp;kHz beep at
-audio media-time&nbsp;1.0&nbsp;s, so <b>flash and beep coincide only if the edit list is applied.</b>
+The same media is played two ways in <b>this</b> browser. The video track carries a single leading
+<b>empty edit</b> (an <code>elst</code> entry with <code>media_time = -1</code>, <code>media_rate = 1</code>,
+duration&nbsp;3.0&nbsp;s) that delays the picture by 3.0&nbsp;s; the audio track has no such edit. A white
+flash sits at video media-time&nbsp;0 and a 1&nbsp;kHz beep at audio media-time&nbsp;3.0&nbsp;s, so
+<b>the flash lands on the beep only if the offset is applied.</b>
 </p>
 <ul class="note">
-  <li><b>Left, MSE.</b> The DASH init + media segments produced by <code>ffmpeg -f dash</code> are fed through
-      <code>MediaSource</code> / <code>SourceBuffer.appendBuffer</code> (two source buffers, video + audio).
-      The video init segment contains the <code>elst</code>.</li>
-  <li><b>Right, direct.</b> The identical media as a progressive file via <code>video.src</code>.</li>
+  <li><b>Left, MSE.</b> The DASH init + media segments from <code>ffmpeg -f dash</code> are fed through
+      <code>MediaSource</code> / <code>SourceBuffer.appendBuffer</code> (video + audio source buffers). The
+      video init segment contains the <code>elst</code>.</li>
+  <li><b>Right, direct.</b> The identical media as a progressive file via <code>video.src</code> (a control:
+      Chromium applies the offset here, but Firefox's progressive path also drops it, so judge each player
+      on its own flash vs beep, not against the other).</li>
 </ul>
 
-<button id="go">Start both players</button>
-<button id="unmuteM">Unmute the MSE player (hear flash vs beep)</button>
+<button id="go">Start both players (with sound)</button>
+<span class="note">You should <b>hear a beep</b> from each. In the player that dropped the offset, the beep
+comes seconds after its flash.</span>
 
 <div id="verdict">Click "Start both players".</div>
 
 <div class="players">
-  <div class="p"><b>MSE (appendBuffer)</b><br><video id="videoM" muted playsinline></video><div class="read" id="readM">idle</div></div>
-  <div class="p"><b>Direct (video.src)</b><br><video id="videoD" muted playsinline></video><div class="read" id="readD">idle</div></div>
+  <div class="p"><b>MSE (<code>appendBuffer</code>)</b><br>
+    <video id="videoM" playsinline></video>
+    <div class="badge" id="badgeM"></div>
+    <div class="read" id="readM">idle</div></div>
+  <div class="p"><b>Direct (<code>video.src</code>)</b><br>
+    <video id="videoD" playsinline></video>
+    <div class="badge" id="badgeD"></div>
+    <div class="read" id="readD">idle</div></div>
 </div>
 
 <p class="note">
-Expected (per the MSE byte-stream spec, which requires edit lists to be honored): the MSE player shows
-the flash at presentation time&nbsp;1.0&nbsp;s, in sync with the beep, with video <code>buffered.start</code>
-= 1.0&nbsp;s and <code>duration</code> = 5.0&nbsp;s. Observed in Chromium: the MSE player drops the empty
-edit, so <code>buffered.start</code> = 0, <code>duration</code> = 4.0&nbsp;s, flash painted at 0.0&nbsp;s,
-1.0&nbsp;s ahead of the beep. Firefox honors it through MSE (this page shows the MSE player in sync there).
-The direct <code>video.src</code> player is included as a control that the media itself is correct.
+The verdict below is read from the MSE player's own signals: video <code>SourceBuffer.buffered.start</code>
+and the painted frame's <code>mediaTime</code> (<code>requestVideoFrameCallback</code>). Applied &rarr;
+<code>buffered.start</code> = 3.0&nbsp;s, flash on the beep. Not applied &rarr; <code>buffered.start</code> = 0,
+flash 3.0&nbsp;s early. Chromium and Firefox disagree on the identical bytes; see the README for the spec
+question this raises.
 </p>
 
 <script>
+const EXPECTED_SHIFT_S = 3.0;                 // = the empty-edit duration (make-asset.sh DELAY)
 const VMIME = 'video/mp4; codecs="avc1.42c00d"';
 const AMIME = 'audio/mp4; codecs="mp4a.40.2"';
 const DASH = {
@@ -73,6 +86,7 @@ const appendTo = (sb, buf) => new Promise((res, rej) => {
 
 async function startMSE() {
   const v = document.getElementById('videoM');
+  v.muted = false; v.volume = 1;
   const [vi, vs, ai, as] = await Promise.all([DASH.vInit, DASH.vSeg, DASH.aInit, DASH.aSeg].map(fetchBuf));
   const ms = new MediaSource();
   v.src = URL.createObjectURL(ms);
@@ -83,21 +97,26 @@ async function startMSE() {
     await appendTo(aSB, ai); await appendTo(aSB, as);
     mseBufferedStart = vSB.buffered.length ? +vSB.buffered.start(0).toFixed(3) : null;
     try { if (ms.readyState === 'open') ms.endOfStream(); } catch (e) {}
+    // If the offset WAS applied, the video sits at [shift, ...] with an empty gap
+    // at the front; some engines (Firefox) stall on that gap during autoplay.
+    // Seek into the media so the honored player actually plays and shows sync.
+    if (mseBufferedStart != null && mseBufferedStart > 0.1) v.currentTime = mseBufferedStart;
+    v.play().catch(() => {});
   }, { once: true });
-  watch(v, 'MSE', document.getElementById('readM'), () => mseBufferedStart);
-  v.play().catch(() => {});
+  watch(v, 'MSE', document.getElementById('readM'), document.getElementById('badgeM'), () => mseBufferedStart);
 }
 
 async function startDirect() {
   const v = document.getElementById('videoD');
+  v.muted = false; v.volume = 1;
   v.src = URL.createObjectURL(new Blob([await fetchBuf(PLAIN)], { type: 'video/mp4' }));
-  watch(v, 'Direct', document.getElementById('readD'), () => null);
+  watch(v, 'Direct', document.getElementById('readD'), document.getElementById('badgeD'), () => null);
   v.play().catch(() => {});
 }
 
-// Record the media-time (frame PTS) of the first white flash frame. That is the
-// unambiguous signal: honored -> flash presents at ~1.0 s, ignored -> ~0.0 s.
-function watch(video, label, readEl, bufStart) {
+// Record the media-time (frame PTS) of the first white flash frame.
+// Applied -> flash presents at ~EXPECTED_SHIFT_S. Not applied -> ~0.
+function watch(video, label, readEl, badgeEl, bufStart) {
   const c = document.createElement('canvas'); c.width = 32; c.height = 24;
   const ctx = c.getContext('2d', { willReadFrequently: true });
   let found = false;
@@ -114,6 +133,7 @@ function watch(video, label, readEl, bufStart) {
         duration: +video.duration.toFixed(3),
         videoBufferedStart: bufStart(),
       };
+      setBadge(badgeEl, results[label]);
       render();
     }
   };
@@ -127,38 +147,52 @@ function watch(video, label, readEl, bufStart) {
   const tick = () => {
     const r = results[label];
     readEl.textContent =
-      'duration           ' + (isFinite(video.duration) ? video.duration.toFixed(3) : '?') + ' s\n' +
-      'currentTime        ' + video.currentTime.toFixed(3) + ' s\n' +
+      'duration            ' + (isFinite(video.duration) ? video.duration.toFixed(3) : '?') + ' s\n' +
+      'currentTime         ' + video.currentTime.toFixed(3) + ' s\n' +
       (bufStart() != null ? 'video buffered.start ' + bufStart() + ' s\n' : '') +
-      'flash presented at ' + (r && r.flashMediaTime != null ? r.flashMediaTime + ' s (frame mediaTime)' : 'watching...');
-    if (!r || video.currentTime < 3) requestAnimationFrame(tick);
+      'flash presented at  ' + (r && r.flashMediaTime != null ? r.flashMediaTime + ' s (frame mediaTime)' : 'watching...');
+    if (!r || video.currentTime < EXPECTED_SHIFT_S + 1.5) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+}
+
+// A player "applied" the offset if its flash presents near EXPECTED_SHIFT_S
+// (for MSE, buffered.start near the shift is the direct signal).
+function applied(r) {
+  if (!r) return null;
+  if (r.videoBufferedStart != null) return r.videoBufferedStart > EXPECTED_SHIFT_S * 0.5;
+  return r.flashMediaTime != null && r.flashMediaTime > EXPECTED_SHIFT_S * 0.5;
+}
+
+function setBadge(el, r) {
+  const a = applied(r);
+  if (a == null) { el.className = 'badge'; el.textContent = ''; return; }
+  el.className = 'badge ' + (a ? 'good' : 'bad');
+  el.textContent = a
+    ? '✓ offset applied: flash on the beep (in sync)'
+    : '✗ empty edit dropped: video ' + EXPECTED_SHIFT_S.toFixed(1) + ' s ahead of the beep';
 }
 
 function render() {
   const m = results.MSE, d = results.Direct;
   const V = document.getElementById('verdict');
-  if (!m || !d) return;
-  // The verdict pivots on the MSE player's OWN signals (buffered.start / duration),
-  // which are unambiguous. Honored -> the 1.0 s empty edit shifts video onto the
-  // presentation timeline: buffered.start ~1.0, duration ~5.0. Ignored -> 0 and 4.0.
-  const honored = m.videoBufferedStart != null ? m.videoBufferedStart > 0.5 : m.duration > 4.5;
-  window.__repro = { MSE: m, Direct: d, mseHonored: honored };
-  if (!honored) {
-    V.innerHTML = '<span class="bug">Bug reproduced.</span> Through MSE this browser dropped the video track\'s 1.0 s empty edit: '
-      + 'video <code>buffered.start</code> = ' + m.videoBufferedStart + ' s and <code>duration</code> = ' + m.duration + ' s '
-      + '(should be 1.0 s and 5.0 s). The flash paints at media-time ' + m.flashMediaTime + ' s, 1.0 s ahead of the beep.'
-      + (d.duration > 4.5 ? ' The identical media via <code>video.src</code> is correct here: duration ' + d.duration + ' s, flash at ' + d.flashMediaTime + ' s, in sync.' : '');
-  } else {
-    V.innerHTML = '<span class="ok">Edit list honored.</span> Through MSE this browser kept the empty edit: '
-      + 'video <code>buffered.start</code> = ' + m.videoBufferedStart + ' s, <code>duration</code> = ' + m.duration + ' s, flash at '
-      + m.flashMediaTime + ' s (in sync with the beep).';
+  if (!m) return;
+  const mseApplied = applied(m);
+  window.__repro = { MSE: m, Direct: d, mseApplied: mseApplied };
+  if (mseApplied === false) {
+    V.innerHTML = '<span class="bug">This browser’s MSE did not apply the empty-edit offset.</span> '
+      + 'Video <code>buffered.start</code> = ' + m.videoBufferedStart + ' s, <code>duration</code> = ' + m.duration
+      + ' s; the flash paints at media-time ' + m.flashMediaTime + ' s, ' + EXPECTED_SHIFT_S.toFixed(1)
+      + ' s before the beep.'
+      + (d && applied(d) ? ' The same file via <code>video.src</code> here does apply it (flash at ' + d.flashMediaTime + ' s).' : '');
+  } else if (mseApplied === true) {
+    V.innerHTML = '<span class="ok">This browser’s MSE applied the empty-edit offset.</span> '
+      + 'Video <code>buffered.start</code> = ' + m.videoBufferedStart + ' s, <code>duration</code> = ' + m.duration
+      + ' s, flash on the beep (in sync).';
   }
 }
 
 document.getElementById('go').onclick = () => { startMSE(); startDirect(); };
-document.getElementById('unmuteM').onclick = () => { const v = document.getElementById('videoM'); v.muted = false; v.volume = 1; };
 window.__reproReady = true;
 </script>
 </body>

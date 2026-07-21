@@ -2,9 +2,9 @@
 # Regenerate the repro media. Deterministic; requires only ffmpeg.
 #
 # The media: a 4 s clip with a white flash at video media-time 0 and a 1 kHz
-# beep at audio media-time 1.0 s. The video track is given a 1.0 s leading
+# beep at audio media-time 3.0 s. The video track is given a 3.0 s leading
 # EMPTY EDIT (edts/elst) via -itsoffset, so honoring the edit list delays the
-# picture by 1.0 s and the flash lands on top of the beep. Two forms are built:
+# picture by 3.0 s and the flash lands on top of the beep. Two forms are built:
 #
 #   plain.mp4   progressive single file (edit list in moov) -> the direct/control player
 #   dash/       `ffmpeg -f dash` output: the video init segment KEEPS the elst,
@@ -18,7 +18,7 @@
 # tfhd base-data-offset that MSE rejects. Hence the DASH form.
 set -e
 cd "$(dirname "$0")"
-DELAY=1.0; DUR=4
+DELAY=3.0; DUR=4
 
 ffmpeg -y -v error -f lavfi -i "color=c=black:s=320x240:r=30:d=${DUR}" \
   -vf "drawbox=x=0:y=0:w=iw:h=ih:c=white:t=fill:enable='lt(t,0.1)'" \

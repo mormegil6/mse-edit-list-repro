@@ -1,37 +1,59 @@
-# Chromium MSE ignores a track's edit list (edts/elst)
+# An empty-edit (elst, media_time = -1) presentation offset: applied by Firefox MSE and by Chromium's non-MSE playback, dropped by Chromium MSE
 
-Minimal, self-contained reproduction: when media is played through **Media Source
-Extensions**, Chromium ignores an `edts`/`elst` edit list on the video track.
-The same media plays correctly through `<video src>` in Chromium, and correctly
-through MSE in Firefox. The result is a fixed, container-encoded A/V desync for
-any DASH/CMAF stream whose init segment carries a track edit list, which is the
-default output of `ffmpeg -f dash`.
+Minimal, self-contained reproduction of an interoperability difference. An fMP4
+initialization segment whose video track carries a single leading **empty edit**
+(an `elst` entry with `media_time = -1`, `media_rate = 1`, non-zero duration)
+gets different A/V alignment across engines and delivery paths, on the **identical
+bytes**:
 
-## TL;DR
+- **Firefox** through MSE delays video presentation by the empty-edit duration (in sync).
+- **Chromium** through `<video src>` (not MSE) also delays it (in sync).
+- **Chromium** through **Media Source Extensions** does not, so the video plays that much ahead of the audio.
 
-The video track has a **1.0 s leading empty edit**. A white flash sits at video
-media-time 0; a 1 kHz beep sits at audio media-time 1.0 s. Honoring the edit
-list delays the picture by 1.0 s, so the flash lands on the beep (in sync).
+Same file, same browser, two delivery paths that disagree, and two engines that
+disagree on the MSE path: that divergence is the core, undeniable observation.
 
-| through | flash presented at | reported `duration` | video `buffered.start` | in sync? |
-|---|---|---|---|---|
-| Chromium, MSE `appendBuffer` | **0.0 s** | **4.0 s** | **0.0 s** | no, 1.0 s off |
-| Chromium, `<video src>` (control) | 1.0 s | 5.0 s | n/a | yes |
-| Firefox, MSE `appendBuffer` | 1.0 s | 5.0 s | 1.0 s | yes |
+This is the default output of `ffmpeg -f dash` whenever the muxed tracks do not
+start at exactly the same timestamp (for example, a live transcoder whose audio
+and video begin a fraction of a second apart), so it affects real streams, not
+just this synthetic file.
 
-The MSE numbers are read straight from the MSE API (`SourceBuffer.buffered`,
-`HTMLMediaElement.duration`) plus the painted frame's `mediaTime` from
-`requestVideoFrameCallback`, so there is no measurement ambiguity: Chromium's
-MSE places the video track at presentation time 0 instead of 1.0 s.
+## The precise behavior
+
+The white flash is at video media-time 0; the 1 kHz beep is at audio media-time
+3.0 s. Applying the 3.0 s empty edit delays the picture so the flash lands on the
+beep.
+
+| path | flash presented at | `duration` | video `buffered.start` |
+|---|---|---|---|
+| Chromium, MSE `appendBuffer` | **0.0 s** | **4.0 s** | **0.0 s** (offset not applied) |
+| Chromium, `<video src>` (control) | 3.0 s | 7.0 s | n/a (offset applied) |
+| Firefox, MSE `appendBuffer` | 3.0 s | 7.0 s | 3.0 s (offset applied) |
+
+The numbers are read straight from the MSE API (`SourceBuffer.buffered`,
+`HTMLMediaElement.duration`) and the painted frame's `mediaTime`
+(`requestVideoFrameCallback`), so there is no measurement ambiguity: Chromium's
+MSE places the video track at presentation time 0 instead of 3.0 s.
+
+## What this is and is not claiming
+
+It is **not** "Chromium ignores edit lists." Chromium applies edit lists for
+trimming: its own MSE test data includes `tiny-clip.mp4`, which relies on the
+`elst` for AAC end trimming (see the reference below). What this report is about is
+specifically the **empty edit** (`media_time = -1`) **presentation offset**: an
+empty edit inserts a gap before the media (a delay) instead of trimming into it,
+and that offset is what MSE does not apply. This report tests only the empty-edit
+offset, measured on the bytes in `dash/`; it does not test the non-empty trim case.
 
 ## Live demo
 
 **https://mormegil6.github.io/mse-edit-list-repro/**
 
-Click **Start both players**. The left player (MSE) shows the flash immediately;
-the right player (direct file) waits 1.0 s. Press **Unmute the MSE player** to
-hear the flash and beep 1.0 s apart. A one-line verdict reports the measured
-numbers.
+Click **Start both players (with sound)**. Each player beeps. In the player that
+dropped the offset, you see the flash and then hear the beep 3 seconds later; in
+the player that applied it, the flash and beep coincide. A per-player badge marks
+which one is in sync **in your browser**. The two badges swap between Chromium and
+Firefox (explained below), which is the whole point.
 
 ## Reproduce locally
 
@@ -39,84 +61,124 @@ numbers.
 git clone https://github.com/mormegil6/mse-edit-list-repro.git
 cd mse-edit-list-repro
 python3 -m http.server 8000
-# open http://localhost:8000/ in Chrome/Chromium, click "Start both players"
+# open http://localhost:8000/ in Chrome/Chromium, click Start
 ```
 
-(It must be served over HTTP, not opened as a `file://` URL, because MSE fetches
-the segments.)
+(Serve over HTTP, not a `file://` URL, because MSE fetches the segments.)
 
-## Steps
+## What the file contains (byte-verified)
 
-1. Serve the folder and open `index.html` in Chrome/Chromium.
-2. Click **Start both players**.
-3. Observe the left (MSE) player and its readout.
+`plain.mp4` carries 4 s of media behind a 3.0 s leading empty edit (7 s total
+presentation, which is why the control row above reports `duration` 7.0 s). Its
+video track has a two-entry edit list: the 3.0 s empty edit (`media_time = -1`)
+followed by the normal edit. `dash/` is produced from it by `ffmpeg -f dash`; the
+video **init segment** (`dash/init-stream0.m4s`)
+preserves that empty edit in its `moov`, and the media segments use moof-relative
+addressing (`default-base-is-moof`), so they append through MSE.
 
-### Expected
-
-Per the ISO BMFF byte stream format for MSE, the edit list in the initialization
-segment is applied. The MSE player should present the first video frame (the
-flash) at 1.0 s, in sync with the beep, with `duration` = 5.0 s and video
-`buffered.start` = 1.0 s. This is what direct `<video src>` playback does in
-Chromium, and what Firefox does through MSE.
-
-### Actual (Chromium)
-
-The MSE player drops the 1.0 s empty edit. The flash is painted at 0.0 s,
-`duration` is 4.0 s, and video `buffered.start` is 0.0 s. The audio track (no
-edit) still plays the beep at 1.0 s, so audio and video are 1.0 s out of sync.
-
-## What the file contains
-
-`plain.mp4` is a 4 s clip. Its video track carries a two-entry edit list: a 1.0 s
-empty edit (`elst` segment_duration = movie_timescale, media_time = -1) followed
-by the normal edit. The DASH form in `dash/` is produced from it by
-`ffmpeg -f dash`; the video **init segment** (`dash/init-stream0.m4s`) preserves
-that empty edit in its `moov`, and the media segments use moof-relative
-addressing (`default-base-is-moof`), so they are appendable through MSE.
-
-You can confirm the edit list is present in the init segment with any box dumper,
-for example `mp4dump` (Bento4) or `MP4Box -info`:
+Confirm the empty edit in the init segment with any box dumper:
 
 ```
-$ mp4dump dash/init-stream0.m4s | grep -A3 elst
+$ mp4dump dash/init-stream0.m4s | grep -A4 elst
       [elst] size=12+28
         entry_count = 2
-        entry/segment duration = 1000    # 1.0 s in the 1000-tick movie timescale
+        entry/segment duration = 3000    # 3.0 s in the 1000-tick movie timescale
         entry/media time = -1            # empty edit
+        entry/media rate = 1
 
-$ MP4Box -info dash/init-stream0.m4s 2>&1 | grep edits
-Track has 2 edits: track duration is 00:00:01.000
+$ MP4Box -diso dash/init-stream0.m4s    # <EditListEntry Duration="3000" MediaTime="-1" MediaRate="1"/>
 ```
 
-- `index.html` appends `dash/init-stream0.m4s` + `dash/chunk-stream0-00001.m4s`
-  to a video `SourceBuffer`, and the stream1 pair to an audio `SourceBuffer`.
+- `index.html` appends `dash/init-stream0.m4s` + `dash/chunk-stream0-00001.m4s` to
+  a video `SourceBuffer` and the stream1 pair to an audio `SourceBuffer`.
 - The control player just sets `video.src` to `plain.mp4`.
 
 Both players receive the identical encoded media; only the delivery path differs.
 
+## Why the two badges swap between browsers
+
+The reliable signal is each player's **own** alignment (flash vs beep), which the
+badges report. The cross-player comparison is not reliable, because the two
+engines differ on both paths in opposite directions:
+
+- Chromium: MSE drops the offset (video early); `<video src>` applies it.
+- Firefox: MSE applies the offset; `<video src>` (progressive) drops it.
+
+So "MSE vs direct" flips sign between browsers. Judge each player on its own
+flash-vs-beep, not against the other player. One more detail: when the offset is
+applied through MSE, the video `SourceBuffer` has an empty gap `[0, 3 s]` at the
+front, and some engines stall on autoplay at that gap; the demo seeks the honored
+player into the media so it actually plays and shows the in-sync result.
+
+## The spec question this raises
+
+The MSE ISO BMFF byte stream format was clarified in 2014 (W3C Bug 26066) to
+require:
+
+> The user agent must support setting the offset from media composition time to
+> movie presentation time by handling an Edit Box (edts) containing a single Edit
+> List Box (elst) that contains a single edit with media rate one. This edit may
+> have a duration of 0 (indicating that it spans all subsequent media) or may
+> have a non-zero duration (indicating the total duration of the movie including
+> fragments).
+
+The empty-edit **delay** pattern is two entries (an empty edit, then the normal
+edit), which is arguably outside the *single* edit the spec mandates, even though
+the empty edit itself has `media_rate = 1`. So this is a genuine, answerable
+question rather than a clear-cut defect:
+
+> Is applying an empty-edit (`media_time = -1`) presentation offset intended to be
+> supported under MSE? If not, is that limitation documented anywhere?
+
+Firefox applies it; `ffmpeg -f dash` emits it by default; and the canonical MSE
+test file `bipbopinit.mp4` carries the same `media_time = -1` empty edit (see the
+Mozilla reference below). That is the interoperability gap worth resolving, either
+by supporting it in Chromium or by documenting that it is out of scope.
+
 ## Why it matters
 
-This is not a synthetic edge case. `ffmpeg -f dash` (and other packagers) write a
-track edit list into the init segment whenever the muxed tracks do not start at
-exactly the same timestamp, for example when a live transcoder's audio and video
-begin a fraction of a second apart. Every player built on MSE (dash.js,
-Shaka Player, hls.js fMP4, video.js, and so on) then paints video ahead of audio
-by the edit-list amount on Chromium, while the same stream is in sync on Firefox
-and in sync in a non-MSE `<video>` element. The desync is baked into the
-container, so it cannot be corrected by seeking or by buffering.
+`ffmpeg -f dash` (and other packagers) write a track edit list into the init
+segment whenever the muxed tracks do not start at the same timestamp. Because the
+offset is dropped at the MSE layer, MSE-based players (dash.js, Shaka Player,
+hls.js, video.js) are expected to inherit the same desync on Chromium, while the
+same stream is in sync on Firefox and in a non-MSE `<video>` element; hls.js has
+an independent report (#7432 below). The offset is carried in the init segment, so
+a player that drops it produces a desync the application cannot fix by seeking or
+buffering.
+
+## Related reports and references
+
+- **W3C, Bug 26066, "Clarify edit list requirements"** (the mandate quoted above):
+  https://dvcs.w3.org/hg/html-media/rev/0505b9684488
+- **hls.js #7432, "Audio start timestamp offset in fMP4 stream is ignored"**
+  (Chrome 138, MSE; audio starts at 0 instead of the 3 s offset in fMP4, correct
+  in TS). An analogous presentation offset dropped on the audio side through the
+  fMP4/MSE path: https://github.com/video-dev/hls.js/issues/7432
+- **Mozilla bug 1140965, "Test file bipbopinit.mp4 contains multiple edits"**
+  (the standard MSE test file carries a `media_time = -1` empty edit plus a second
+  edit; quotes the single-edit mandate):
+  https://bugzilla.mozilla.org/show_bug.cgi?id=1140965
+- **Chromium `media/test/data/README.md`** documents `tiny-clip.mp4` as
+  "rel[ying] on the edit list (`elst`) for trimming" (AAC end trimming), which is
+  direct evidence that Chromium does apply edit-list trimming (so the gap here is
+  the empty-edit offset specifically):
+  https://github.com/chromium/chromium/blob/main/media/test/data/README.md
+- **nzhang227/gapless_audio_mse** (a developer's account, "Seems like most media
+  stacks don't handle ELST correctly," with an appendWindow workaround):
+  https://github.com/nzhang227/gapless_audio_mse
 
 ## Environment
 
 - Reproduced: Chromium 150 (Brave, macOS 14). The behavior is engine-level, so it
-  applies to Chrome, Edge, and other Chromium browsers. Please add your exact
+  applies to Chrome, Edge, and other Chromium browsers; please add your exact
   Chrome build when filing.
-- Control (honors the edit list through MSE): Firefox 151.
+- Firefox 151 applies the offset through MSE (the contrasting behavior).
 - Assets built with ffmpeg 8.1.2.
 
 ## Rebuild the assets
 
 The committed `plain.mp4` and `dash/` are enough to reproduce. To regenerate them
-from scratch (requires only ffmpeg):
+(requires only ffmpeg), and to change the offset, edit `DELAY` in the script:
 
 ```
 ./make-asset.sh
