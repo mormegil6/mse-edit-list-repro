@@ -20,20 +20,22 @@ just this synthetic file.
 
 ## The precise behavior
 
-The white flash is at video media-time 0; the 1 kHz beep is at audio media-time
-3.0 s. Applying the 3.0 s empty edit delays the picture so the flash lands on the
-beep.
+The white flash is at video media-time 1.0 s; the 1 kHz beep is at audio media-time
+4.0 s. Applying the 3.0 s empty edit delays the picture so the flash lands exactly
+on the beep (both at presentation time 4.0 s). (The flash is at 1.0 s rather than 0
+so the empty-edit lead-in renders as black, and the flash reads as a discrete event
+rather than filling the whole gap.)
 
 | path | flash presented at | `duration` | video `buffered.start` |
 |---|---|---|---|
-| Chromium, MSE `appendBuffer` | **0.0 s** | **4.0 s** | **0.0 s** (offset not applied) |
-| Chromium, `<video src>` (control) | 3.0 s | 7.0 s | n/a (offset applied) |
-| Firefox, MSE `appendBuffer` | 3.0 s | 7.0 s | 3.0 s (offset applied) |
+| Chromium, MSE `appendBuffer` | **1.0 s** (3 s before the beep) | **5.0 s** | **0.0 s** (offset not applied) |
+| Chromium, `<video src>` (control) | 4.0 s (on the beep) | 8.0 s | n/a (offset applied) |
+| Firefox, MSE `appendBuffer` | 4.0 s (on the beep) | 8.0 s | 3.0 s (offset applied) |
 
 The numbers are read straight from the MSE API (`SourceBuffer.buffered`,
-`HTMLMediaElement.duration`) and the painted frame's `mediaTime`
+`HTMLMediaElement.duration`) and the painted flash frame's `mediaTime`
 (`requestVideoFrameCallback`), so there is no measurement ambiguity: Chromium's
-MSE places the video track at presentation time 0 instead of 3.0 s.
+MSE places the video track 3.0 s earlier than Firefox's MSE does, on the same bytes.
 
 ## What this is and is not claiming
 
@@ -49,11 +51,11 @@ offset, measured on the bytes in `dash/`; it does not test the non-empty trim ca
 
 **https://mormegil6.github.io/mse-edit-list-repro/**
 
-Click **Start both players (with sound)**. Each player beeps. In the player that
-dropped the offset, you see the flash and then hear the beep 3 seconds later; in
-the player that applied it, the flash and beep coincide. A per-player badge marks
-which one is in sync **in your browser**. The two badges swap between Chromium and
-Firefox (explained below), which is the whole point.
+Click **Start**. Under each player an event timeline prints when the video flash
+and the audio beep occur. If the offset was applied, the flash reads at 4.0 s, on
+the beep (in sync); if it was dropped, the flash reads at 1.0 s, 3 s before the
+beep. A badge states the result. The non-MSE control player is shown in Chromium
+only (see "the control player" below).
 
 ## Reproduce locally
 
@@ -68,8 +70,8 @@ python3 -m http.server 8000
 
 ## What the file contains (byte-verified)
 
-`plain.mp4` carries 4 s of media behind a 3.0 s leading empty edit (7 s total
-presentation, which is why the control row above reports `duration` 7.0 s). Its
+`plain.mp4` carries 5 s of media behind a 3.0 s leading empty edit (8 s total
+presentation, which is why the control row above reports `duration` 8.0 s). Its
 video track has a two-entry edit list: the 3.0 s empty edit (`media_time = -1`)
 followed by the normal edit. `dash/` is produced from it by `ffmpeg -f dash`; the
 video **init segment** (`dash/init-stream0.m4s`)
@@ -95,20 +97,20 @@ $ MP4Box -diso dash/init-stream0.m4s    # <EditListEntry Duration="3000" MediaTi
 
 Both players receive the identical encoded media; only the delivery path differs.
 
-## Why the two badges swap between browsers
+## The control player (Chromium only), and a Firefox note
 
-The reliable signal is each player's **own** alignment (flash vs beep), which the
-badges report. The cross-player comparison is not reliable, because the two
-engines differ on both paths in opposite directions:
+The `<video src>` control is shown in Chromium only. Its job there is to prove the
+media is fine outside MSE: Chromium applies the offset on the same file when it is
+not going through `appendBuffer`. In Firefox it is hidden, because Firefox's
+progressive `<video src>` path *drops* the offset (a separate quirk, opposite to
+Chromium's progressive path and unrelated to the MSE behavior this report is
+about); showing it there would only distract. Judge each player on its own
+flash-vs-beep, never one player against the other.
 
-- Chromium: MSE drops the offset (video early); `<video src>` applies it.
-- Firefox: MSE applies the offset; `<video src>` (progressive) drops it.
-
-So "MSE vs direct" flips sign between browsers. Judge each player on its own
-flash-vs-beep, not against the other player. One more detail: when the offset is
-applied through MSE, the video `SourceBuffer` has an empty gap `[0, 3 s]` at the
-front, and some engines stall on autoplay at that gap; the demo seeks the honored
-player into the media so it actually plays and shows the in-sync result.
+One implementation detail: when the offset is applied through MSE, the video
+`SourceBuffer` has an empty gap `[0, 3 s]` at the front, and some engines (Firefox)
+stall on autoplay at that gap. The demo seeks the honored player into the media so
+it plays and shows the in-sync result rather than sitting on a black frame.
 
 ## The spec question this raises
 
