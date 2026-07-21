@@ -1,5 +1,7 @@
 # An empty-edit (elst, media_time = -1) presentation offset: applied by Firefox MSE and by Chromium's non-MSE playback, dropped by Chromium MSE
 
+**Filed with Chromium:** https://issues.chromium.org/issues/537235698
+
 Minimal, self-contained reproduction of an interoperability difference. An fMP4
 initialization segment whose video track carries a single leading **empty edit**
 (an `elst` entry with `media_time = -1`, `media_rate = 1`, non-zero duration)
