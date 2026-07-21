@@ -57,6 +57,13 @@ the beep (in sync); if it was dropped, the flash reads at 1.0 s, 3 s before the
 beep. A badge states the result. The non-MSE control player is shown in Chromium
 only (see "the control player" below).
 
+A companion page,
+[**`/progressive.html`**](https://mormegil6.github.io/mse-edit-list-repro/progressive.html),
+plays the same file through a plain `<video src>` (no MSE) and shows the opposite
+split: Chromium applies the offset there (`duration` 8.0 s, flash at 4.0 s), while
+Firefox drops it (`duration` 5.0 s, flash at 1.0 s). So Firefox applies this offset
+through MSE but not in progressive playback; Chromium is the reverse.
+
 ## Reproduce locally
 
 ```

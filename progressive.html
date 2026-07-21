@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Progressive MP4: empty-edit (elst) presentation offset not applied in Firefox</title>
+<style>
+  body { font: 15px/1.55 system-ui, sans-serif; max-width: 780px; margin: 24px auto; padding: 0 16px; color: #111; background: #fff; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  #verdict { font-size: 16px; font-weight: 700; padding: 12px 14px; border-radius: 8px; background: #f3f3f3; margin: 16px 0; }
+  .bug { color: #b00020; } .ok { color: #087f23; }
+  video { width: 320px; height: 240px; background: #000; border: 1px solid #ccc; display: block; margin-top: 8px; }
+  .read { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; white-space: pre; margin-top: 8px; background: #fafafa; border: 1px solid #eee; padding: 8px; min-height: 4em; }
+  button { font-size: 15px; padding: 9px 16px; margin: 6px 8px 6px 0; }
+  code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; }
+  .note { color: #444; font-size: 13.5px; }
+  .hit { color: #b8860b; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>Progressive (non-MSE) playback of a leading empty edit (<code>elst</code>, <code>media_time = -1</code>)</h1>
+<p class="note">
+This plays <code>plain.mp4</code> through a plain <code>&lt;video src&gt;</code> element (no Media Source
+Extensions). The video track has a single leading <b>empty edit</b> (duration 3.0&nbsp;s,
+<code>media_time = -1</code>) that should delay the picture by 3.0&nbsp;s; a white flash is at video
+media-time 1.0&nbsp;s and a 1&nbsp;kHz beep at audio media-time 4.0&nbsp;s. Applying the offset delays the
+flash onto the beep (both at 4.0&nbsp;s) and makes the total <code>duration</code> 8.0&nbsp;s; dropping it
+leaves the flash at 1.0&nbsp;s and <code>duration</code> 5.0&nbsp;s (media length only).
+</p>
+<p class="note">
+<b>Chromium</b> applies it here (<code>duration</code> 8.0&nbsp;s, flash at 4.0&nbsp;s). <b>Firefox</b> does
+not (<code>duration</code> 5.0&nbsp;s, flash at ~1.0&nbsp;s). Note Firefox <i>does</i> apply the same offset
+through MSE (see <a href="./">the MSE demo</a>), so this is a difference between Firefox's own two paths.
+</p>
+
+<button id="go">Start (with sound)</button>
+<div id="verdict">Click "Start".</div>
+<video id="v" playsinline></video>
+<div class="read" id="tl">idle</div>
+
+<script>
+const SHIFT_S = 3.0, FLASH_MEDIA_S = 1.0, BEEP_PRES_S = 4.0;
+const st = { duration: null, flashMediaTime: null, flashCurrentTime: null, beepCurrentTime: null };
+
+function render() {
+  const V = document.getElementById('verdict');
+  if (st.duration == null || st.flashMediaTime == null) return;
+  // "applied" iff the empty edit was added to the timeline (duration ~8, flash ~4).
+  const appliedOffset = st.duration > (FLASH_MEDIA_S + SHIFT_S + 5) * 0.5 + 1; // > ~6.5
+  window.__prog = { duration: st.duration, flashMediaTime: st.flashMediaTime, flashCurrentTime: st.flashCurrentTime, beepCurrentTime: st.beepCurrentTime, applied: appliedOffset };
+  if (appliedOffset) {
+    V.innerHTML = '<span class="ok">This browser applied the empty-edit offset in progressive playback.</span> '
+      + '<code>duration</code> = ' + st.duration + ' s, flash at ' + st.flashMediaTime + ' s (on the beep).';
+  } else {
+    V.innerHTML = '<span class="bug">This browser dropped the empty-edit offset in progressive playback.</span> '
+      + '<code>duration</code> = ' + st.duration + ' s (media length only; the 3.0 s empty edit was not added), '
+      + 'flash at ' + st.flashMediaTime + ' s (' + (BEEP_PRES_S - st.flashMediaTime).toFixed(1) + ' s before the beep).';
+  }
+}
+
+document.getElementById('go').onclick = async () => {
+  const v = document.getElementById('v'), tl = document.getElementById('tl');
+  v.muted = false; v.volume = 1;
+  const buf = await fetch('plain.mp4').then(r => r.arrayBuffer());
+  v.src = URL.createObjectURL(new Blob([buf], { type: 'video/mp4' }));
+  v.addEventListener('loadedmetadata', () => { st.duration = +v.duration.toFixed(3); render(); }, { once: true });
+  const c = document.createElement('canvas'); c.width = 32; c.height = 24;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const sampleFlash = (mt) => {
+    if (st.flashCurrentTime != null || !v.videoWidth) return;
+    ctx.drawImage(v, 0, 0, 32, 24);
+    const d = ctx.getImageData(0, 0, 32, 24).data;
+    let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2];
+    if (s / (32 * 24 * 3) > 200) {
+      st.flashCurrentTime = +v.currentTime.toFixed(3);
+      st.flashMediaTime = (mt != null ? +mt.toFixed(3) : st.flashCurrentTime);
+      render();
+    }
+  };
+  if (v.requestVideoFrameCallback) {
+    const cb = (now, meta) => { sampleFlash(meta.mediaTime); if (st.flashCurrentTime == null) v.requestVideoFrameCallback(cb); };
+    v.requestVideoFrameCallback(cb);
+  } else {
+    const loop = () => { sampleFlash(null); if (st.flashCurrentTime == null) requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  }
+  const tick = () => {
+    if (st.beepCurrentTime == null && v.currentTime >= BEEP_PRES_S - 0.05) st.beepCurrentTime = +v.currentTime.toFixed(2);
+    tl.innerHTML =
+      'duration ' + (isFinite(v.duration) ? v.duration.toFixed(3) : '?') + ' s\n' +
+      (st.flashMediaTime != null ? '<span class="hit">⚡ video flash</span> at ' + st.flashMediaTime.toFixed(2) + ' s\n' : '⚡ video flash: watching...\n') +
+      (st.beepCurrentTime != null ? '<span class="hit">🔊 audio beep</span> at ' + st.beepCurrentTime.toFixed(2) + ' s\n' : '🔊 audio beep: waiting (at 4.0 s)...\n') +
+      'currentTime ' + v.currentTime.toFixed(2) + ' s';
+    if (v.currentTime < BEEP_PRES_S + 1.5 || st.flashMediaTime == null) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  v.play().catch(() => {});
+};
+window.__progReady = true;
+</script>
+</body>
+</html>
