@@ -56,8 +56,14 @@
   .mark .lab{position:absolute;top:100%;left:50%;transform:translateX(-50%);
              font-size:11px;color:var(--muted);white-space:nowrap;margin-top:1px}
   .tick{position:absolute;top:0;height:100%;width:1px;background:var(--line)}
-  .verdict-inline{flex:0 0 96px;font-size:13px;font-weight:700}
+  .verdict-inline{flex:0 0 96px;font-size:13px;font-weight:700;line-height:1.25}
   .g{color:var(--good)} .r{color:var(--bad)}
+  .anchor{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--accent);transform:translateX(-50%)}
+  .tlaxis{display:flex;align-items:flex-start;gap:12px;margin:4px 0 0}
+  .axistrack{position:relative;flex:1;height:16px}
+  .axistrack span{position:absolute;top:0;transform:translateX(-50%);font-size:12px;color:var(--muted)}
+  .axistrack .zero{color:var(--accent);font-weight:700}
+  .tlcap{font-size:12.5px;color:var(--muted);text-align:center;margin:2px 0 0}
 
   /* demo cards */
   .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 4px}
@@ -134,17 +140,18 @@
   follow it. Some ignore it. And the surprising part: <b>the same browser can do both</b>,
   depending on how the video is loaded.</p>
   <div class="tldr">
-    <b>TL;DR</b> — Two tiny demos run right on this page, one at a time, so you can watch the
-    problem yourself — the timeline under the player shows it even with sound off. Below them:
+    <b>TL;DR.</b> Two tiny demos run right on this page, one at a time, so you can watch the
+    problem yourself; the timeline under the player shows it even with sound off. Below them:
     why it happens, and where each browser and the spec now stand.
   </div>
 </header>
 
 <h2>What’s actually going on</h2>
-<p>A video file can carry an <b>edit list</b> — a small note to the player. Ours says
-<i>“delay the picture by 3 seconds”</i>, so that the picture and a separately-timed soundtrack
-end up aligned. Nothing exotic; it’s a standard part of the MP4 format that editing tools emit
-all the time.</p>
+<p>A video file can carry an <b>edit list</b>: a small note to the player. Ours says
+<i>“delay the picture by 3 seconds”</i>, so the picture and a separately-timed soundtrack end up
+aligned. (Three seconds is deliberately exaggerated to make the effect unmissable; the real stream
+that started this was off by about two.) Nothing exotic; it’s a standard part of the MP4 format that
+editing tools emit all the time.</p>
 <p>To make the effect impossible to miss, the test file has a <b>white flash</b> in the picture
 and a <b>beep</b> in the sound, positioned so they coincide <i>only if the 3-second delay is
 applied</i>:</p>
@@ -154,32 +161,44 @@ applied</i>:</p>
     <div class="tllabel">Delay applied<br>(correct)</div>
     <div class="track">
       <span class="tick" style="left:12.5%"></span><span class="tick" style="left:25%"></span>
-      <span class="tick" style="left:37.5%"></span><span class="tick" style="left:50%"></span>
-      <span class="tick" style="left:62.5%"></span><span class="tick" style="left:75%"></span>
-      <span class="tick" style="left:87.5%"></span>
-      <span class="mark" style="left:50%">⚡🔊<span class="lab">flash + beep together — in sync</span></span>
+      <span class="tick" style="left:37.5%"></span><span class="tick" style="left:62.5%"></span>
+      <span class="tick" style="left:75%"></span><span class="tick" style="left:87.5%"></span>
+      <span class="anchor"></span>
+      <span class="mark" style="left:50%">⚡🔊</span>
     </div>
-    <div class="verdict-inline g">in sync</div>
+    <div class="verdict-inline g">video<br>in sync</div>
   </div>
   <div class="tlrow">
     <div class="tllabel">Delay dropped<br>(the bug)</div>
     <div class="track">
       <span class="tick" style="left:12.5%"></span><span class="tick" style="left:25%"></span>
-      <span class="tick" style="left:37.5%"></span><span class="tick" style="left:50%"></span>
-      <span class="tick" style="left:62.5%"></span><span class="tick" style="left:75%"></span>
-      <span class="tick" style="left:87.5%"></span>
-      <span class="mark" style="left:12.5%">⚡<span class="lab">flash</span></span>
-      <span class="mark" style="left:50%">🔊<span class="lab">…beep, 3&nbsp;s later</span></span>
+      <span class="tick" style="left:37.5%"></span><span class="tick" style="left:62.5%"></span>
+      <span class="tick" style="left:75%"></span><span class="tick" style="left:87.5%"></span>
+      <span class="anchor"></span>
+      <span class="mark" style="left:12.5%">⚡</span>
+      <span class="mark" style="left:50%">🔊</span>
     </div>
-    <div class="verdict-inline r">3 s early</div>
+    <div class="verdict-inline r">video<br>3 s early</div>
+  </div>
+  <div class="tlaxis">
+    <div class="tllabel"></div>
+    <div class="axistrack">
+      <span style="left:12.5%">−3</span><span style="left:25%">−2</span>
+      <span style="left:37.5%">−1</span><span class="zero" style="left:50%">0</span>
+      <span style="left:62.5%">+1</span><span style="left:75%">+2</span>
+      <span style="left:87.5%">+3</span>
+    </div>
+    <div class="verdict-inline"></div>
   </div>
 </div>
+<p class="tlcap">Seconds relative to the beep. The beep (audio) is fixed at&nbsp;0; only the video
+flash moves, landing 3&nbsp;s early when the delay is dropped.</p>
 
-<p>Everything else is identical — the <b>same bytes</b> in every browser. The only thing that
+<p>Everything else is identical: the <b>same bytes</b> in every browser. The only thing that
 changes the outcome is the browser, and how it loads the video.</p>
 
-<h2>Try it — one demo at a time</h2>
-<p class="small">Pick a demo. <b>Only one plays at a time</b> — two beeps together would make it
+<h2>Try it: one demo at a time</h2>
+<p class="small">Pick a demo. <b>Only one plays at a time;</b> two beeps together would make it
 impossible to judge whether a flash and a beep line up, which is the whole reason. <b>Sound is
 optional:</b> the timeline under the player shows the offset as a visible gap, so it reads fine
 muted (handy on a phone). Then reopen this page in a <b>different</b> browser and watch it flip.</p>
@@ -188,14 +207,14 @@ muted (handy on a phone). Then reopen this page in a <b>different</b> browser an
   <div class="demobtns">
     <button class="demobtn" id="btnMSE" type="button">
       <span class="play">▶</span>Streaming (MSE): Chrome and Safari get this wrong
-      <span class="k">Media Source Extensions — how live players, YouTube and Netflix feed video</span>
+      <span class="k">Media Source Extensions: how live players, YouTube and Netflix feed video</span>
     </button>
     <button class="demobtn" id="btnPlain" type="button">
       <span class="play">▶</span>Plain file: Firefox gets this wrong instead
-      <span class="k">A direct &lt;video src&gt; — the simplest way to play a file</span>
+      <span class="k">A direct &lt;video src&gt;, the simplest way to play a file</span>
     </button>
   </div>
-  <div class="soundrow"><button class="soundbtn" id="btnSound" type="button">🔇 Sound off — tap to enable</button></div>
+  <div class="soundrow"><button class="soundbtn" id="btnSound" type="button">🔇 Sound off · tap to enable</button></div>
   <div class="stage">
     <video id="player" playsinline muted></video>
     <canvas id="strip" width="1440" height="200" role="img"
@@ -205,13 +224,13 @@ muted (handy on a phone). Then reopen this page in a <b>different</b> browser an
       video frame. Their gap on the timeline is the desync.</div>
   </div>
 </div>
-<p class="small">Prefer the bare, single-purpose versions? The originals — linked from the browser bug
-reports — are still here:
+<p class="small">Prefer the bare, single-purpose versions? The originals (linked from the browser bug
+reports) are still here:
 <a href="index.html" target="_blank" rel="noopener">streaming (MSE)</a> ·
 <a href="progressive.html" target="_blank" rel="noopener">plain file</a>.</p>
 
 <h2>The twist: no browser agreed with itself</h2>
-<p>Put the two demos side by side and a pattern appears — read across each row:</p>
+<p>Put the two demos side by side and a pattern appears; read across each row:</p>
 <table class="matrix">
   <thead>
     <tr><th></th><th>Streaming<br><span class="small">(MSE)</span></th>
@@ -229,10 +248,10 @@ reports — are still here:
       <td class="cell cell-good"><span class="t">follows</span><span class="s">in sync</span></td></tr>
   </tbody>
 </table>
-<p class="small">*Every <b>shipping</b> Safari still drops the offset under streaming — Safari 26.5.2
+<p class="small">*Every <b>shipping</b> Safari still drops the offset under streaming: Safari 26.5.2
 (release) and 27.0 beta&nbsp;1 both, as of 23&nbsp;Jul&nbsp;2026. WebKit’s fix landed in <b>trunk</b>
 on 7&nbsp;Jul&nbsp;2026 (<a href="https://bugs.webkit.org/show_bug.cgi?id=316870">bug&nbsp;316870</a>,
-316626@main) but is not in any release or beta yet. Chrome also still drops it today — a fix is
+316626@main) but is not in any release or beta yet. Chrome also still drops it today; a fix is
 intended, not shipped (see below). So on today’s browsers the streaming demo is wrong in <b>both</b>
 Chrome and Safari.</p>
 <p><b>Chrome and Firefox are mirror images</b>, and today <b>no shipping engine</b> handles the same
@@ -242,18 +261,21 @@ no agreed, written-down answer for what <i>should</i> happen. That’s what turn
 everyone converge on it.”</p>
 
 <h2>Why it matters</h2>
-<p>This is one concrete way a live or on-demand video stream can silently drift out of lip-sync in
-the browser — invisible in ordinary content, and only pin-pointable with a file engineered to
-expose it. Reducing a real-world 2–3&nbsp;second desync down to a ~12&nbsp;KB reproduction is what
-made it possible to file precisely, in the same terms, against every engine and the spec at once.</p>
+<p>This is one concrete way a live or on-demand video stream can sit out of lip-sync in the
+browser: not a drift but a fixed offset, constant for the whole stream. The error itself is obvious;
+its cause is invisible in ordinary content, and only pin-pointable with a file engineered to expose
+it. The real stream sat about 1.6 to 2.0&nbsp;seconds out, the exact figure re-minted on every
+encoder restart, which is part of what made it confusing. Reducing that to a ~12&nbsp;KB
+reproduction is what made it possible to file precisely, in the same terms, against every engine and
+the spec at once.</p>
 
 <h2>Where it stands</h2>
-<p>Filed as an interoperability clarification — observation, evidence, question — against every
+<p>Filed as an interoperability clarification (observation, evidence, question), against every
 engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;July&nbsp;2026:</p>
 <ul class="rec">
   <li><span class="who">Safari · WebKit</span>
     <span class="st">Fix landed in WebKit <b>trunk</b> (7&nbsp;Jul&nbsp;2026, 316626@main). Not in any
-      shipping Safari yet — 26.5.2 and 27.0&nbsp;beta&nbsp;1 still drop it.</span>
+      shipping Safari yet; 26.5.2 and 27.0&nbsp;beta&nbsp;1 still drop it.</span>
     <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=316870">trunk only →</a></li>
   <li><span class="who">Chrome</span>
     <span class="st">Issue assigned; intent to adapt stated, conditional on Safari’s rollout. Nothing
@@ -269,7 +291,7 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
     <a class="pill prog" href="https://github.com/w3c/media-source/issues/377">open →</a></li>
   <li><span class="who">Root cause, upstream</span>
     <span class="st">The streaming server (Envelop Earshot) was patched to stop emitting the ambiguous
-      edit at all — PR&nbsp;#53, merged; two further contributions, #54 and #55, also merged.</span>
+      edit at all: PR&nbsp;#53, merged; two further contributions, #54 and #55, also merged.</span>
     <a class="pill done" href="https://github.com/EnvelopSound/Earshot/pull/53">merged →</a></li>
 </ul>
 
@@ -359,8 +381,8 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
     if(flashPres==null){verdict.textContent='';return;}
     var gap=+(BEEP-flashPres).toFixed(1);
     verdict.innerHTML = Math.abs(gap)<0.35
-      ? '<span class="g">✓ flash lands on the beep — in sync</span>'
-      : '<span class="r">✗ flash '+Math.abs(gap).toFixed(1)+' s before the beep — out of sync</span>';
+      ? '<span class="g">✓ flash lands on the beep, in sync</span>'
+      : '<span class="r">✗ flash '+Math.abs(gap).toFixed(1)+' s before the beep, out of sync</span>';
   }
   function setActive(m){btnMSE.classList.toggle('active',m==='mse');btnPlain.classList.toggle('active',m==='plain');}
 
@@ -429,7 +451,7 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
   btnPlain.addEventListener('click',startPlain);
   btnSound.addEventListener('click',function(){
     soundOn=!soundOn;player.muted=!soundOn;
-    btnSound.textContent=soundOn?'🔊 Sound on':'🔇 Sound off — tap to enable';
+    btnSound.textContent=soundOn?'🔊 Sound on':'🔇 Sound off · tap to enable';
   });
   draw(0);
 })();
