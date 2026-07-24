@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232557c7'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
-<title>Same video, out of sync — depending on your browser</title>
-<meta name="description" content="A tiny instruction inside a video file tells the player to delay the picture to match the sound. Some browsers follow it, some ignore it — and the same browser can do both, depending on how the video is loaded. Two 12 KB demos, and the story of getting it fixed.">
-<meta property="og:title" content="Same video, out of sync — depending on your browser">
-<meta property="og:description" content="A 12 KB reproduction of a cross-browser A/V-sync interoperability bug — and how it got fixed across Chrome, Safari, Firefox and the spec.">
+<title>Same video, out of sync -- depending on your browser</title>
+<meta name="description" content="A tiny instruction inside a video file tells the player to delay the picture to match the sound. Some browsers follow it, some ignore it -- and the same browser can do both, depending on how the video is loaded. Two 12 KB demos, and the story of getting it fixed.">
+<meta property="og:title" content="Same video, out of sync -- depending on your browser">
+<meta property="og:description" content="A 12 KB reproduction of a cross-browser A/V-sync interoperability bug -- and how it got fixed across Chrome, Safari, Firefox and the spec.">
 <meta property="og:type" content="article">
 <style>
   :root{
@@ -133,7 +133,7 @@
 
 <header>
   <span class="kicker">Web media interoperability</span>
-  <h1>The same video, seconds out of sync — depending on your browser</h1>
+  <h1>The same video, seconds out of sync -- depending on your browser</h1>
   <p class="byline">By <a href="https://bmroz.eu">Bartłomiej&nbsp;Mróz</a> · Gdańsk University of Technology</p>
   <p class="lede">Inside a video file there can be a tiny instruction that says
   <i>“hold the picture back a moment so it lines up with the sound.”</i> Some browsers
@@ -341,7 +341,7 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
     g.beginPath();g.moveTo(x,y0);g.lineTo(x,y1);g.stroke();g.setLineDash([]);}
 
   // Static strip: the audio's beep at 4 s, and (once measured) where THIS browser fires the
-  // video flash. Their spatial gap is the desync — readable with sound off.
+  // video flash. Their spatial gap is the desync -- readable with sound off.
   function draw(cur){
     lastCur=cur||0;
     var W=strip.width,H=strip.height,L=16,R=16,PW=W-L-R;
