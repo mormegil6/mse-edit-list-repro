@@ -145,8 +145,8 @@ The full picture, per engine and delivery path, on the identical bytes (measured
 | Firefox / Gecko | applies | drops |
 
 *(These are the shipping behaviors reproducible today. Since filing, WebKit trunk
-has changed to apply the offset under MSE; see **Status** at the end of "The spec
-question this raises" below.)*
+has changed to apply the offset under MSE; see [Status](#status-as-of-23-july-2026)
+below.)*
 
 Every engine is internally inconsistent between its own two paths, and no two
 engines agree on both. In Chrome and Safari, MSE is the deviant path: it drops an
@@ -244,17 +244,43 @@ buffering.
 
 ## Environment
 
-- Reproduced: Chromium 150 (Brave, macOS 14). The behavior is engine-level, so it
+- Reproduced: Chromium 150 (Brave, macOS 15). The behavior is engine-level, so it
   applies to Chrome, Edge, and other Chromium browsers; please add your exact
   Chrome build when filing.
-- Firefox 151 applies the offset through MSE (the contrasting behavior).
+- **Independently reproduced by Chromium's own triage** across macOS, Windows 11
+  and Linux (Debian), on Chrome Stable 150, Beta 151, Dev 152 and Canary 152:
+  three operating systems and four release channels, confirmed by the vendor.
+- Firefox 152 applies the offset through MSE (the contrasting behavior).
+- Safari / WebKit: shipping builds drop it under MSE (tested 26.5.2 release and
+  27.0 beta 1); WebKit trunk has since changed to apply it (see the Status
+  section above).
 - Assets built with ffmpeg 8.1.2.
 
 ## Rebuild the assets
 
 The committed `plain.mp4` and `dash/` are enough to reproduce. To regenerate them
-(requires only ffmpeg), and to change the offset, edit `DELAY` in the script:
+(requires only ffmpeg), and to change the offset, edit `SHIFT` in the script:
 
 ```
 ./make-asset.sh
 ```
+
+The explainer page (`explained.html`) uses its own separate clip, `explained.mp4`
+plus `dash-explained/`, with a visible test card instead of a black frame (same
+empty edit, timing and codec). It is built by a sibling script that never touches
+the reproduction assets above:
+
+```
+./make-explained-asset.sh
+```
+
+## License
+
+- **Source code** (the HTML pages, JavaScript, and the `make-*.sh` scripts): MIT,
+  see [LICENSE](LICENSE).
+- **Generated test media** (`plain.mp4`, `dash/`, `explained.mp4`,
+  `dash-explained/`) and the social card (`og.png`): dedicated to the public
+  domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+  These are synthetic ffmpeg output containing no third-party material, so anyone,
+  including a browser vendor turning this into a Web Platform Test, can use, adapt
+  or redistribute them without restriction or attribution.
