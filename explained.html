@@ -321,9 +321,12 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
 <script>
 (function(){
   var VMIME='video/mp4; codecs="avc1.42c00d"', AMIME='audio/mp4; codecs="mp4a.40.2"';
-  var DASH={vInit:'dash/init-stream0.m4s',vSeg:'dash/chunk-stream0-00001.m4s',
-            aInit:'dash/init-stream1.m4s',aSeg:'dash/chunk-stream1-00001.m4s'};
-  var PLAIN='plain.mp4';
+  // Explainer-only clip (a visible test card, so the player is not a black frame in a
+  // screenshot). SEPARATE from the minimal repro's plain.mp4 / dash/ -- same elst,
+  // timing, codec and full-frame white flash. Built by make-explained-asset.sh.
+  var DASH={vInit:'dash-explained/init-stream0.m4s',vSeg:'dash-explained/chunk-stream0-00001.m4s',
+            aInit:'dash-explained/init-stream1.m4s',aSeg:'dash-explained/chunk-stream1-00001.m4s'};
+  var PLAIN='explained.mp4';
   var BEEP=4.0, XMAX=8.0;                       // presentation-time axis, seconds
 
   var player=document.getElementById('player');
