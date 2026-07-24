@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+  html,body{margin:0}
+  .card{width:1200px;height:630px;box-sizing:border-box;padding:58px 64px;
+        background:radial-gradient(120% 140% at 12% 0%,#1b2340 0%,#12141b 60%);
+        color:#e8eaf0;font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+        display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+  .kick{font-size:19px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#7aa2f0}
+  h1{font-size:52px;line-height:1.08;letter-spacing:-.02em;margin:14px 0 0;font-weight:800;max-width:1010px}
+  h1 .dim{color:#a2a9b6;font-weight:600}
+  .tl{margin:6px 0}
+  .row{display:flex;align-items:center;gap:20px;margin:14px 0}
+  .rlab{flex:0 0 210px;text-align:right;font-size:20px;color:#c2c8d4;line-height:1.2}
+  .rlab b{color:#e8eaf0}
+  .track{position:relative;flex:1;height:64px;background:#191c22;border:1px solid #2a2e37;border-radius:12px}
+  .anchor{position:absolute;top:-8px;bottom:-8px;left:50%;width:3px;background:#7aa2f0;transform:translateX(-50%)}
+  .m{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:34px}
+  .v{flex:0 0 150px;font-size:22px;font-weight:800}
+  .v.g{color:#54d07f}.v.r{color:#f2879a}
+  .foot{display:flex;justify-content:space-between;align-items:flex-end;font-size:19px;color:#a2a9b6}
+  .foot b{color:#e8eaf0}
+</style></head><body>
+<div class="card">
+  <div>
+    <div class="kick">Web media interoperability</div>
+    <h1>The same video, seconds out of sync.<br><span class="dim">The offset flips with the browser.</span></h1>
+  </div>
+  <div class="tl">
+    <div class="row">
+      <div class="rlab"><b>Firefox</b><br>streaming</div>
+      <div class="track"><div class="anchor"></div><div class="m" style="left:50%">⚡🔊</div></div>
+      <div class="v g">in sync</div>
+    </div>
+    <div class="row">
+      <div class="rlab"><b>Chrome &amp; Safari</b><br>streaming</div>
+      <div class="track"><div class="anchor"></div>
+        <div class="m" style="left:16%">⚡</div><div class="m" style="left:50%">🔊</div></div>
+      <div class="v r">3 s early</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>⚡ video flash &nbsp;·&nbsp; 🔊 audio beep &nbsp;·&nbsp; the line is where they should meet</div>
+    <div><b>Bartłomiej Mróz</b> · Gdańsk Tech</div>
+  </div>
+</div>
+</body></html>
