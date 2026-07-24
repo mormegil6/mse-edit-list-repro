@@ -280,7 +280,8 @@ the reproduction assets above:
   see [LICENSE](LICENSE).
 - **Generated test media** (`plain.mp4`, `dash/`, `explained.mp4`,
   `dash-explained/`) and the social card (`og.png`): dedicated to the public
-  domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-  These are synthetic ffmpeg output containing no third-party material, so anyone,
-  including a browser vendor turning this into a Web Platform Test, can use, adapt
-  or redistribute them without restriction or attribution.
+  domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), see
+  [LICENSE-ASSETS](LICENSE-ASSETS). These are synthetic ffmpeg output containing
+  no third-party material, so anyone, including a browser vendor turning this into
+  a Web Platform Test, can use, adapt or redistribute them without restriction or
+  attribution.

@@ -1,0 +1,26 @@
+Asset license: CC0 1.0 Universal (public domain dedication)
+
+The source code in this repository (the HTML pages, JavaScript, and the
+make-*.sh scripts) is licensed under the MIT License; see LICENSE. This file
+covers only the generated media assets, which are instead dedicated to the
+public domain under Creative Commons CC0 1.0 Universal.
+
+Assets covered:
+  - plain.mp4
+  - dash/
+  - explained.mp4
+  - dash-explained/
+  - og.png
+
+These are synthetic ffmpeg output (colour bars or a black frame, a full-frame
+white flash, and a 1 kHz tone) and contain no third-party material. To the
+extent possible under law, Bartłomiej Mróz has waived all copyright and related
+or neighboring rights to them. You may copy, modify, distribute, and use the
+assets, including for commercial purposes, all without asking permission and
+without attribution.
+
+Full legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Summary:         https://creativecommons.org/publicdomain/zero/1.0/
+
+The assets are provided "as is", without warranty of any kind, to the extent
+permitted by law.
