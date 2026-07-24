@@ -1,8 +1,16 @@
 # An empty-edit (elst, media_time = -1) presentation offset: applied by Firefox MSE and by Chromium's non-MSE playback, dropped by Chromium MSE
 
-**Filed with Chromium:** https://issues.chromium.org/issues/537235698
+**Filed as an interoperability clarification, one report per engine and the spec:**
+
+- **Chromium / Blink:** https://issues.chromium.org/issues/537235698
+- **WebKit / Safari:** https://bugs.webkit.org/show_bug.cgi?id=316870
+- **Gecko / Firefox** (the mirror-image case, on the plain-file path): https://bugzilla.mozilla.org/show_bug.cgi?id=2056945
+- **W3C Media Source #377**, the underlying spec discrepancy: https://github.com/w3c/media-source/issues/377
+
 **Source-side fix (merged upstream):** https://github.com/EnvelopSound/Earshot/pull/53
 (aligning the track starts at the packager so no edit list is written at all)
+
+Per-engine status is in the [Status](#status-as-of-23-july-2026) section below.
 
 Minimal, self-contained reproduction of an interoperability difference. An fMP4
 initialization segment whose video track carries a single leading **empty edit**
