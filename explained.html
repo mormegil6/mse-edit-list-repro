@@ -72,14 +72,31 @@
        font-weight:600;font-size:15px;border-radius:9px;padding:10px 14px;margin-top:auto}
   .btn:hover{text-decoration:none;filter:brightness(1.06)}
 
-  /* inline demo embeds */
-  .demo{margin:16px 0 30px}
-  .demo-head h3{margin:0 0 5px;font-size:18px}
-  .tag{font-size:12px;font-weight:600;color:var(--muted);background:var(--soft);
-       border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-left:7px;vertical-align:middle}
-  .demo .sub{font-size:14.5px;color:var(--muted);margin:0 0 12px}
-  .demoframe{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;
-             box-shadow:var(--shadow);display:block}
+  .byline{font-size:14.5px;color:var(--muted);margin:0 0 4px}
+  .byline a{font-weight:600}
+
+  /* interactive demo (one at a time) */
+  .demo{margin:14px 0 8px}
+  .demobtns{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
+  .demobtn{flex:1 1 264px;text-align:left;background:var(--card);color:var(--fg);
+           border:1.5px solid var(--line);border-radius:12px;padding:12px 15px;
+           font-size:14.5px;font-weight:600;line-height:1.35;cursor:pointer;box-shadow:var(--shadow)}
+  .demobtn:hover{border-color:var(--accent)}
+  .demobtn.active{border-color:var(--accent);background:var(--accent-soft)}
+  .demobtn .play{color:var(--accent);margin-right:6px}
+  .demobtn .k{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-top:4px}
+  .soundrow{text-align:center;margin:0 0 14px}
+  .soundbtn{font-size:13px;font-weight:600;color:var(--muted);background:var(--soft);
+            border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer}
+  .soundbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:14px;
+         padding:14px 14px 12px;box-shadow:var(--shadow)}
+  .stage video{display:block;width:100%;max-width:300px;aspect-ratio:4/3;background:#000;
+               border-radius:8px;margin:0 auto 8px}
+  #strip{display:block;width:100%;height:auto}
+  #verdict2{font-size:15.5px;font-weight:600;text-align:center;margin-top:8px;min-height:1.4em}
+  #verdict2 .g{color:var(--good)} #verdict2 .r{color:var(--bad)}
+  .stage .cap{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px}
 
   /* matrix */
   .matrix{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
@@ -111,14 +128,15 @@
 <header>
   <span class="kicker">Web media interoperability</span>
   <h1>The same video, seconds out of sync — depending on your browser</h1>
+  <p class="byline">By <a href="https://bmroz.eu">Bartłomiej&nbsp;Mróz</a> · Gdańsk University of Technology</p>
   <p class="lede">Inside a video file there can be a tiny instruction that says
   <i>“hold the picture back a moment so it lines up with the sound.”</i> Some browsers
   follow it. Some ignore it. And the surprising part: <b>the same browser can do both</b>,
   depending on how the video is loaded.</p>
   <div class="tldr">
-    <b>TL;DR</b> — Two self-contained demos (about 12&nbsp;KB each) let you see and hear the
-    problem in your own browser, then switch browsers to watch the result flip. Below them:
-    why it happens, and how it got fixed across Chrome, Safari, Firefox and the specification.
+    <b>TL;DR</b> — Two tiny demos run right on this page, one at a time, so you can watch the
+    problem yourself — the timeline under the player shows it even with sound off. Below them:
+    why it happens, and where each browser and the spec now stand.
   </div>
 </header>
 
@@ -160,33 +178,37 @@ applied</i>:</p>
 <p>Everything else is identical — the <b>same bytes</b> in every browser. The only thing that
 changes the outcome is the browser, and how it loads the video.</p>
 
-<h2>Try it — both demos run right here</h2>
-<p class="small">Best on a desktop browser with sound on. Click <b>Start</b> in each, watch for the
-white flash, and listen for the beep — each player prints the two times it measured. Then reopen
-this page in a <b>different</b> browser and watch the verdicts flip.</p>
+<h2>Try it — one demo at a time</h2>
+<p class="small">Pick a demo. <b>Only one plays at a time</b> — two beeps together would make it
+impossible to judge whether a flash and a beep line up, which is the whole reason. <b>Sound is
+optional:</b> the timeline under the player shows the offset as a visible gap, so it reads fine
+muted (handy on a phone). Then reopen this page in a <b>different</b> browser and watch it flip.</p>
 
 <div class="demo">
-  <div class="demo-head">
-    <h3>1 · Streaming<span class="tag">Media Source Extensions</span></h3>
-    <p class="sub">How live players, YouTube and Netflix feed video.
-      <b>Chrome</b> drops the delay → picture 3&nbsp;s early; <b>Firefox</b> follows it → in sync.</p>
+  <div class="demobtns">
+    <button class="demobtn" id="btnMSE" type="button">
+      <span class="play">▶</span>Streaming (MSE): Chrome and Safari get this wrong
+      <span class="k">Media Source Extensions — how live players, YouTube and Netflix feed video</span>
+    </button>
+    <button class="demobtn" id="btnPlain" type="button">
+      <span class="play">▶</span>Plain file: Firefox gets this wrong instead
+      <span class="k">A direct &lt;video src&gt; — the simplest way to play a file</span>
+    </button>
   </div>
-  <iframe class="demoframe" src="index.html" title="Streaming (MSE) demo" loading="lazy"
-          style="height:940px" scrolling="auto"></iframe>
-  <p class="small"><a href="index.html" target="_blank" rel="noopener">Open this demo in its own tab ↗</a></p>
-</div>
-
-<div class="demo">
-  <div class="demo-head">
-    <h3>2 · Plain file<span class="tag">&lt;video src&gt;</span></h3>
-    <p class="sub">The simplest possible way to play a file — a direct <code>&lt;video src&gt;</code>.
-      <b>Firefox</b> drops the delay → 3&nbsp;s early; <b>Chrome</b> follows it → in sync. The exact
-      opposite of demo&nbsp;1.</p>
+  <div class="soundrow"><button class="soundbtn" id="btnSound" type="button">🔇 Sound off — tap to enable</button></div>
+  <div class="stage">
+    <video id="player" playsinline muted></video>
+    <canvas id="strip" width="1440" height="200" role="img"
+            aria-label="Timeline: the audio beep at 4 seconds, and where this browser fires the video flash"></canvas>
+    <div id="verdict2">Pick a demo above to start.</div>
+    <div class="cap">Beep = the only sound in the clip (a 1&nbsp;kHz blip at 4&nbsp;s). Flash = the white
+      video frame. Their gap on the timeline is the desync.</div>
   </div>
-  <iframe class="demoframe" src="progressive.html" title="Plain-file (progressive) demo" loading="lazy"
-          style="height:660px" scrolling="auto"></iframe>
-  <p class="small"><a href="progressive.html" target="_blank" rel="noopener">Open this demo in its own tab ↗</a></p>
 </div>
+<p class="small">Prefer the bare, single-purpose versions? The originals — linked from the browser bug
+reports — are still here:
+<a href="index.html" target="_blank" rel="noopener">streaming (MSE)</a> ·
+<a href="progressive.html" target="_blank" rel="noopener">plain file</a>.</p>
 
 <h2>The twist: no browser agreed with itself</h2>
 <p>Put the two demos side by side and a pattern appears — read across each row:</p>
@@ -203,44 +225,51 @@ this page in a <b>different</b> browser and watch the verdicts flip.</p>
       <td class="cell cell-good"><span class="t">follows</span><span class="s">in sync</span></td>
       <td class="cell cell-bad"><span class="t">drops</span><span class="s">3 s early</span></td></tr>
     <tr><th>Safari</th>
-      <td class="cell cell-good"><span class="t">follows*</span><span class="s">fixed in WebKit trunk</span></td>
+      <td class="cell cell-bad"><span class="t">drops*</span><span class="s">shipping; trunk-fixed, unshipped</span></td>
       <td class="cell cell-good"><span class="t">follows</span><span class="s">in sync</span></td></tr>
   </tbody>
 </table>
-<p class="small">*The streaming row for Safari reflects WebKit <b>trunk</b>. A shipping stable Safari
-still shows the old “drops” result until the fix rides into a release — so if you test the
-streaming demo on today’s Safari, expect the picture 3&nbsp;s early for now. Chrome likewise still
-drops it today; its fix is in progress (below).</p>
-<p><b>Chrome and Firefox are mirror images</b>, and — before the fixes — neither handled the same
-file the same way in both modes. There was no single “broken browser” to point at, because there
-was no agreed, written-down answer for what <i>should</i> happen. That’s what turned a bug report
-into an <b>interoperability question</b>: not “who’s wrong,” but “what’s the correct behaviour, and
-can everyone converge on it.”</p>
+<p class="small">*Every <b>shipping</b> Safari still drops the offset under streaming — Safari 26.5.2
+(release) and 27.0 beta&nbsp;1 both, as of 23&nbsp;Jul&nbsp;2026. WebKit’s fix landed in <b>trunk</b>
+on 7&nbsp;Jul&nbsp;2026 (<a href="https://bugs.webkit.org/show_bug.cgi?id=316870">bug&nbsp;316870</a>,
+316626@main) but is not in any release or beta yet. Chrome also still drops it today — a fix is
+intended, not shipped (see below). So on today’s browsers the streaming demo is wrong in <b>both</b>
+Chrome and Safari.</p>
+<p><b>Chrome and Firefox are mirror images</b>, and today <b>no shipping engine</b> handles the same
+file the same way in both modes. There was no single “broken browser” to point at, because there was
+no agreed, written-down answer for what <i>should</i> happen. That’s what turned a bug report into an
+<b>interoperability question</b>: not “who’s wrong,” but “what’s the correct behaviour, and can
+everyone converge on it.”</p>
 
 <h2>Why it matters</h2>
 <p>This is one concrete way a live or on-demand video stream can silently drift out of lip-sync in
 the browser — invisible in ordinary content, and only pin-pointable with a file engineered to
-expose it. Reducing a real-world 2–3&nbsp;second desync down to these two 12&nbsp;KB pages is what
+expose it. Reducing a real-world 2–3&nbsp;second desync down to a ~12&nbsp;KB reproduction is what
 made it possible to file precisely, in the same terms, against every engine and the spec at once.</p>
 
-<h2>How it got fixed</h2>
-<p>Filed as an interoperability clarification — observation, evidence, question — rather than an
-accusation. The engines and the standard are converging:</p>
+<h2>Where it stands</h2>
+<p>Filed as an interoperability clarification — observation, evidence, question — against every
+engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;July&nbsp;2026:</p>
 <ul class="rec">
   <li><span class="who">Safari · WebKit</span>
-    <span class="st">Changed to follow the delay under streaming.</span>
-    <a class="pill done" href="https://bugs.webkit.org/show_bug.cgi?id=316870">fixed →</a></li>
+    <span class="st">Fix landed in WebKit <b>trunk</b> (7&nbsp;Jul&nbsp;2026, 316626@main). Not in any
+      shipping Safari yet — 26.5.2 and 27.0&nbsp;beta&nbsp;1 still drop it.</span>
+    <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=316870">trunk only →</a></li>
   <li><span class="who">Chrome</span>
-    <span class="st">Media team took the issue and is adapting, now that the others agree.</span>
-    <a class="pill prog" href="https://issues.chromium.org/issues/537235698">in progress →</a></li>
+    <span class="st">Issue assigned; intent to adapt stated, conditional on Safari’s rollout. Nothing
+      shipped or fixed yet.</span>
+    <a class="pill prog" href="https://issues.chromium.org/issues/537235698">assigned →</a></li>
   <li><span class="who">Firefox</span>
-    <span class="st">Already follows it under streaming (the common case); the plain-file side is filed separately.</span>
+    <span class="st">Already follows it under streaming (the common case); the opposite plain-file
+      behaviour is filed separately.</span>
     <a class="pill prog" href="https://bugzilla.mozilla.org/show_bug.cgi?id=2056945">tracked →</a></li>
   <li><span class="who">The spec · W3C</span>
-    <span class="st">Byte-stream registry being clarified, so there’s finally one agreed answer.</span>
-    <a class="pill prog" href="https://github.com/w3c/media-source/issues/377">discussion →</a></li>
+    <span class="st">Open; agreement that the byte-stream registry should be clarified, so there is one
+      written answer.</span>
+    <a class="pill prog" href="https://github.com/w3c/media-source/issues/377">open →</a></li>
   <li><span class="who">Root cause, upstream</span>
-    <span class="st">The streaming server was patched to stop emitting the ambiguous edit in the first place.</span>
+    <span class="st">The streaming server (Envelop Earshot) was patched to stop emitting the ambiguous
+      edit at all — PR&nbsp;#53, merged; two further contributions, #54 and #55, also merged.</span>
     <a class="pill done" href="https://github.com/EnvelopSound/Earshot/pull/53">merged →</a></li>
 </ul>
 
@@ -252,8 +281,158 @@ accusation. The engines and the standard are converging:</p>
   (<code>elst</code> with <code>media_time&nbsp;=&nbsp;-1</code>); the streaming path is Media Source
   Extensions (<code>SourceBuffer.appendBuffer</code>). Both demos read the browser’s own signals and
   print what they measured, so you’re not taking anyone’s word for it.</p>
+  <p>By <a href="https://bmroz.eu">Bartłomiej&nbsp;Mróz</a>, Gdańsk University of Technology.</p>
 </footer>
 
 </div>
+
+<script>
+(function(){
+  var VMIME='video/mp4; codecs="avc1.42c00d"', AMIME='audio/mp4; codecs="mp4a.40.2"';
+  var DASH={vInit:'dash/init-stream0.m4s',vSeg:'dash/chunk-stream0-00001.m4s',
+            aInit:'dash/init-stream1.m4s',aSeg:'dash/chunk-stream1-00001.m4s'};
+  var PLAIN='plain.mp4';
+  var BEEP=4.0, XMAX=8.0;                       // presentation-time axis, seconds
+
+  var player=document.getElementById('player');
+  var strip=document.getElementById('strip'), g=strip.getContext('2d');
+  var verdict=document.getElementById('verdict2');
+  var btnMSE=document.getElementById('btnMSE'), btnPlain=document.getElementById('btnPlain');
+  var btnSound=document.getElementById('btnSound');
+  var soundOn=false, epoch=0, currentMS=null, flashPres=null, lastCur=0;
+
+  var mq=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)');
+  function palette(){
+    return (mq&&mq.matches)
+      ? {fg:'#e8eaf0',mut:'#8b93a3',line:'#2a2e37',beep:'#7fb0e6',flash:'#e8c14a',
+         head:'#7aa2f0',gap:'rgba(242,135,154,.16)',gaptext:'#f2879a'}
+      : {fg:'#16181d',mut:'#8a919e',line:'#e2e5ec',beep:'#2f6fb0',flash:'#b8860b',
+         head:'#2557c7',gap:'rgba(192,32,58,.10)',gaptext:'#c0203a'};
+  }
+  var COL=palette();
+  if(mq&&mq.addEventListener) mq.addEventListener('change',function(){COL=palette();draw(lastCur);});
+
+  var fetchBuf=function(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer();});};
+  var appendTo=function(sb,b){return new Promise(function(res,rej){
+    sb.addEventListener('updateend',res,{once:true});sb.addEventListener('error',rej,{once:true});sb.appendBuffer(b);});};
+  function vline(x,y0,y1,c,w,dash){g.strokeStyle=c;g.lineWidth=w||1;g.setLineDash(dash||[]);
+    g.beginPath();g.moveTo(x,y0);g.lineTo(x,y1);g.stroke();g.setLineDash([]);}
+
+  // Static strip: the audio's beep at 4 s, and (once measured) where THIS browser fires the
+  // video flash. Their spatial gap is the desync — readable with sound off.
+  function draw(cur){
+    lastCur=cur||0;
+    var W=strip.width,H=strip.height,L=16,R=16,PW=W-L-R;
+    var xt=function(t){return L+Math.max(0,Math.min(XMAX,t))/XMAX*PW;};
+    var yTop=34,yBase=H-40;
+    g.clearRect(0,0,W,H);
+    g.font='16px system-ui,sans-serif';g.textAlign='center';g.textBaseline='top';
+    for(var s=0;s<=8;s++){var xs=xt(s);vline(xs,yTop,yBase,COL.line,1);
+      g.fillStyle=COL.mut;g.fillText(s+'s',xs,yBase+8);}
+    // silence baseline + the one beep burst = the audio envelope
+    g.strokeStyle=COL.beep;g.globalAlpha=.45;g.lineWidth=2;
+    g.beginPath();g.moveTo(xt(0),yBase);g.lineTo(xt(XMAX),yBase);g.stroke();g.globalAlpha=1;
+    g.fillStyle=COL.beep;g.globalAlpha=.85;
+    g.beginPath();g.moveTo(xt(3.95),yBase);g.lineTo(xt(4.07),yBase-46);g.lineTo(xt(4.2),yBase);g.closePath();g.fill();g.globalAlpha=1;
+    if(flashPres!=null){
+      var xf=xt(flashPres),xb=xt(BEEP),gap=Math.abs(BEEP-flashPres);
+      if(gap>0.35){
+        g.fillStyle=COL.gap;g.fillRect(Math.min(xf,xb),yTop,Math.abs(xb-xf),yBase-yTop);
+        g.fillStyle=COL.gaptext;g.font='bold 18px system-ui';g.textBaseline='middle';
+        g.fillText('↔ '+gap.toFixed(1)+' s',(xf+xb)/2,(yTop+yBase)/2);g.textBaseline='top';
+      }
+    }
+    vline(xt(BEEP),yTop,yBase,COL.beep,2,[5,4]);
+    if(flashPres!=null) vline(xt(flashPres),yTop,yBase,COL.flash,2.5);
+    g.font='bold 17px system-ui';g.textBaseline='bottom';
+    if(flashPres!=null && Math.abs(BEEP-flashPres)<0.7){
+      g.fillStyle=COL.fg;g.fillText('⚡ flash + 🔊 beep',xt(BEEP),yTop-4);
+    }else{
+      g.fillStyle=COL.beep;g.fillText('🔊 beep',xt(BEEP),yTop-4);
+      if(flashPres!=null){g.fillStyle=COL.flash;g.fillText('⚡ flash',xt(flashPres),yTop-4);}
+    }
+    g.textBaseline='top';
+    if(cur>0.001) vline(xt(cur),yTop-9,yBase+9,COL.head,3);
+  }
+
+  function setVerdict(){
+    if(flashPres==null){verdict.textContent='';return;}
+    var gap=+(BEEP-flashPres).toFixed(1);
+    verdict.innerHTML = Math.abs(gap)<0.35
+      ? '<span class="g">✓ flash lands on the beep — in sync</span>'
+      : '<span class="r">✗ flash '+Math.abs(gap).toFixed(1)+' s before the beep — out of sync</span>';
+  }
+  function setActive(m){btnMSE.classList.toggle('active',m==='mse');btnPlain.classList.toggle('active',m==='plain');}
+
+  // Mutual exclusion: bump the epoch so any callback from the previous demo bails.
+  function stopAll(){
+    epoch++;try{player.pause();}catch(e){}
+    if(currentMS){try{if(currentMS.readyState==='open')currentMS.endOfStream();}catch(e){}currentMS=null;}
+    try{if(player.src)URL.revokeObjectURL(player.src);}catch(e){}
+    player.removeAttribute('src');try{player.load();}catch(e){}
+    flashPres=null;
+  }
+  function watch(my){
+    var cv=document.createElement('canvas');cv.width=32;cv.height=24;
+    var c=cv.getContext('2d',{willReadFrequently:true});
+    function sample(){
+      if(my!==epoch||flashPres!=null||!player.videoWidth)return;
+      c.drawImage(player,0,0,32,24);
+      var d=c.getImageData(0,0,32,24).data,s=0;
+      for(var i=0;i<d.length;i+=4)s+=d[i]+d[i+1]+d[i+2];
+      if(s/(32*24*3)>200){flashPres=+player.currentTime.toFixed(3);setVerdict();}
+    }
+    if(player.requestVideoFrameCallback){
+      var cb=function(){sample();if(my===epoch)player.requestVideoFrameCallback(cb);};
+      player.requestVideoFrameCallback(cb);
+    }
+    (function loop(){if(my!==epoch)return;
+      if(player.ended){draw(player.currentTime||lastCur);return;}
+      sample();draw(player.currentTime||0);requestAnimationFrame(loop);})();
+  }
+
+  async function startMSE(){
+    stopAll();var my=epoch;setActive('mse');verdict.textContent='loading…';draw(0);
+    if(!('MediaSource'in window)){verdict.textContent='this browser has no Media Source Extensions';return;}
+    var bufs;
+    try{bufs=await Promise.all([DASH.vInit,DASH.vSeg,DASH.aInit,DASH.aSeg].map(fetchBuf));}
+    catch(e){if(my===epoch)verdict.textContent='could not load demo assets';return;}
+    if(my!==epoch)return;
+    var ms=new MediaSource();currentMS=ms;player.muted=!soundOn;player.volume=1;
+    player.src=URL.createObjectURL(ms);
+    ms.addEventListener('sourceopen',async function(){
+      if(my!==epoch)return;
+      try{
+        var vSB=ms.addSourceBuffer(VMIME),aSB=ms.addSourceBuffer(AMIME);
+        await appendTo(vSB,bufs[0]);if(my!==epoch)return;await appendTo(vSB,bufs[1]);if(my!==epoch)return;
+        await appendTo(aSB,bufs[2]);if(my!==epoch)return;await appendTo(aSB,bufs[3]);if(my!==epoch)return;
+        var bs=vSB.buffered.length?+vSB.buffered.start(0).toFixed(3):0;
+        try{if(ms.readyState==='open')ms.endOfStream();}catch(e){}
+        if(bs>0.1)player.currentTime=bs;         // skip the empty-edit gap (Firefox stalls otherwise)
+        verdict.textContent='';player.play().catch(function(){});
+      }catch(e){if(my===epoch)verdict.textContent='MSE setup failed';}
+    },{once:true});
+    watch(my);
+  }
+  async function startPlain(){
+    stopAll();var my=epoch;setActive('plain');verdict.textContent='loading…';draw(0);
+    var buf;
+    try{buf=await fetchBuf(PLAIN);}catch(e){if(my===epoch)verdict.textContent='could not load demo asset';return;}
+    if(my!==epoch)return;
+    player.muted=!soundOn;player.volume=1;
+    player.src=URL.createObjectURL(new Blob([buf],{type:'video/mp4'}));
+    verdict.textContent='';player.play().catch(function(){});
+    watch(my);
+  }
+
+  btnMSE.addEventListener('click',startMSE);
+  btnPlain.addEventListener('click',startPlain);
+  btnSound.addEventListener('click',function(){
+    soundOn=!soundOn;player.muted=!soundOn;
+    btnSound.textContent=soundOn?'🔊 Sound on':'🔇 Sound off — tap to enable';
+  });
+  draw(0);
+})();
+</script>
 </body>
 </html>
