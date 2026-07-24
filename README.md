@@ -1,7 +1,7 @@
 # An empty-edit (elst, media_time = -1) presentation offset: applied by Firefox MSE and by Chromium's non-MSE playback, dropped by Chromium MSE
 
 **Filed with Chromium:** https://issues.chromium.org/issues/537235698
-**Source-side fix (upstream PR):** https://github.com/EnvelopSound/Earshot/pull/53
+**Source-side fix (merged upstream):** https://github.com/EnvelopSound/Earshot/pull/53
 (aligning the track starts at the packager so no edit list is written at all)
 
 Minimal, self-contained reproduction of an interoperability difference. An fMP4
@@ -53,6 +53,15 @@ offset, measured on the bytes in `dash/`; it does not test the non-empty trim ca
 
 ## Live demo
 
+**Plain-English explainer (start here):**
+https://mormegil6.github.io/mse-edit-list-repro/explained.html
+
+A general-audience walkthrough of what the empty edit is and why the identical
+video ends up seconds out of sync in one browser but not another. It embeds an
+interactive demo (one player at a time) and a muted-readable timeline strip that
+makes the offset visible without sound.
+
+**The reproduction** (this is the exact URL cited in the Chromium issue above):
 **https://mormegil6.github.io/mse-edit-list-repro/**
 
 Click **Start**. Under each player an event timeline prints when the video flash
@@ -127,6 +136,10 @@ The full picture, per engine and delivery path, on the identical bytes (measured
 | Safari / WebKit | drops | applies |
 | Firefox / Gecko | applies | drops |
 
+*(These are the shipping behaviors reproducible today. Since filing, WebKit trunk
+has changed to apply the offset under MSE; see **Status** at the end of "The spec
+question this raises" below.)*
+
 Every engine is internally inconsistent between its own two paths, and no two
 engines agree on both. In Chrome and Safari, MSE is the deviant path: it drops an
 offset the same engine honors in normal `<video src>` playback. That is the core of
@@ -161,6 +174,33 @@ Firefox applies it; `ffmpeg -f dash` emits it by default; and the canonical MSE
 test file `bipbopinit.mp4` carries the same `media_time = -1` empty edit (see the
 Mozilla reference below). That is the interoperability gap worth resolving, either
 by supporting it in Chromium or by documenting that it is out of scope.
+
+### Status (as of 23 July 2026)
+
+Filed as an interoperability clarification (observation, evidence, question)
+against every engine and the spec at once. Since then the question has drawn
+cross-engine engagement, and the trajectory is toward supporting the offset
+rather than declaring it out of scope:
+
+- **Safari / WebKit**: a fix landed in WebKit trunk (7 July 2026, `316626@main`).
+  No shipping Safari applies it yet (26.5.2 and 27.0 beta 1 still drop it).
+  [WebKit bug 316870](https://bugs.webkit.org/show_bug.cgi?id=316870)
+- **Chrome / Blink**: the Chromium issue is assigned, with intent to adapt
+  stated, conditional on Safari's rollout; nothing has shipped or changed in a
+  released build.
+  [Chromium 537235698](https://issues.chromium.org/issues/537235698)
+- **Firefox / Gecko**: already applies the offset under MSE (the common
+  streaming case); the opposite plain-file behavior is filed separately.
+  [Mozilla 2056945](https://bugzilla.mozilla.org/show_bug.cgi?id=2056945)
+- **The spec / W3C**: open, with agreement that the byte-stream registry should
+  be clarified so there is one written answer.
+  [w3c/media-source #377](https://github.com/w3c/media-source/issues/377)
+- **Root cause (upstream)**: Envelop Earshot, the streaming server that emitted
+  the ambiguous edit, was patched to stop writing it at all: **PR #53, merged**
+  (two further contributions, #54 and #55, also merged).
+
+Nothing is fixed in a shipping browser yet; the list above is where each engine
+and the spec currently stand.
 
 ## Why it matters
 
