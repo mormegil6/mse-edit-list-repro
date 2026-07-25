@@ -3,7 +3,7 @@
 **Filed as an interoperability clarification, one report per engine and the spec:**
 
 - **Chromium / Blink:** https://issues.chromium.org/issues/537235698
-- **WebKit / Safari:** https://bugs.webkit.org/show_bug.cgi?id=316870
+- **WebKit / Safari:** our report https://bugs.webkit.org/show_bug.cgi?id=319998 (resolved as a duplicate of https://bugs.webkit.org/show_bug.cgi?id=316870, where the fix landed)
 - **Gecko / Firefox** (the mirror-image case, on the plain-file path): https://bugzilla.mozilla.org/show_bug.cgi?id=2056945
 - **W3C Media Source #377**, the underlying spec discrepancy: https://github.com/w3c/media-source/issues/377
 
@@ -192,7 +192,7 @@ rather than declaring it out of scope:
 
 - **Safari / WebKit**: a fix landed in WebKit trunk (7 July 2026, `316626@main`).
   No shipping Safari applies it yet (26.5.2 and 27.0 beta 1 still drop it).
-  [WebKit bug 316870](https://bugs.webkit.org/show_bug.cgi?id=316870)
+  [WebKit bug 316870](https://bugs.webkit.org/show_bug.cgi?id=316870) (our report, [bug 319998](https://bugs.webkit.org/show_bug.cgi?id=319998), was resolved as its duplicate)
 - **Chrome / Blink**: the Chromium issue is assigned, with intent to adapt
   stated, conditional on Safari's rollout; nothing has shipped or changed in a
   released build.
