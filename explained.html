@@ -131,6 +131,7 @@
   .rec .who{flex:0 0 132px;font-weight:600;font-size:14px}
   .rec .st{font-size:13.5px;color:var(--muted)}
   .pill{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .pillcol{display:flex;flex-direction:column;gap:6px;align-items:flex-end;align-self:center;margin-left:auto}
   .pill.done{background:var(--good-soft);color:var(--good)}
   .pill.prog{background:var(--accent-soft);color:var(--accent)}
   hr{border:none;border-top:1px solid var(--line);margin:40px 0}
@@ -288,8 +289,10 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
     <span class="st">My report (bug&nbsp;319998) was resolved as a duplicate of an earlier WebKit
       bug&nbsp;316870, where the fix landed in <b>trunk</b> (7&nbsp;Jul&nbsp;2026, 316626@main). Not in
       any shipping Safari yet; 26.5.2 and 27.0&nbsp;beta&nbsp;1 still drop it.</span>
-    <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=319998" target="_blank" rel="noopener">my report →</a>
-    <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=316870" target="_blank" rel="noopener">fix, trunk only →</a></li>
+    <span class="pillcol">
+      <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=319998" target="_blank" rel="noopener">my report →</a>
+      <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=316870" target="_blank" rel="noopener">fix, trunk only →</a>
+    </span></li>
   <li><span class="who">Chrome</span>
     <span class="st">Issue assigned; intent to adapt stated, conditional on Safari’s rollout. Nothing
       shipped or fixed yet.</span>
