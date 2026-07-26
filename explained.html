@@ -306,8 +306,9 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
       written answer.</span>
     <a class="pill prog" href="https://github.com/w3c/media-source/issues/377" target="_blank" rel="noopener">open →</a></li>
   <li><span class="who">Root cause, upstream</span>
-    <span class="st">The streaming server (Envelop Earshot) was patched to stop emitting the ambiguous
-      edit at all: PR&nbsp;#53, merged; two further contributions, #54 and #55, also merged.</span>
+    <span class="st">Not a bug: the streaming server (Envelop Earshot) wrote a perfectly legal flag that
+      many encoders set. The incompatibility lived between the browsers and the spec, not in the
+      server, which now sidesteps the ambiguity by not emitting the edit at all: PR&nbsp;#53, merged.</span>
     <a class="pill done" href="https://github.com/EnvelopSound/Earshot/pull/53" target="_blank" rel="noopener">merged →</a></li>
 </ul>
 
