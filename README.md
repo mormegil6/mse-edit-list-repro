@@ -227,8 +227,22 @@ buffering.
   https://dvcs.w3.org/hg/html-media/rev/0505b9684488
 - **hls.js #7432, "Audio start timestamp offset in fMP4 stream is ignored"**
   (Chrome 138, MSE; audio starts at 0 instead of the 3 s offset in fMP4, correct
-  in TS). An analogous presentation offset dropped on the audio side through the
-  fMP4/MSE path: https://github.com/video-dev/hls.js/issues/7432
+  in TS). The same mechanism as this report, on the audio track. The asset's init
+  segment carries a two-entry edit list on the audio track - a leading empty edit
+  (`media_time = -1`, `segment_duration = 3000` at the 1000-tick movie timescale,
+  i.e. 3.0 s) followed by the normal edit - and that offset is not applied through
+  fMP4/MSE, while the TS variant of the same content plays in sync. Verify it in
+  the issue's own test asset:
+
+  ```
+  curl -sO https://raw.githubusercontent.com/nyanmisaka/jellyfin-preview/refs/heads/master/big-buck-bunny-audio-offset-3s/fmp4/big-buck-bunny-1.mp4
+  mp4dump big-buck-bunny-1.mp4 | grep -B2 -A6 elst
+  ```
+
+  The thread itself attributes the cause to FFmpeg's `tfdt` writing and is closed as
+  works-as-expected for hls.js; the empty edit is nonetheless present in the bytes
+  and is the container-level expression of the same offset:
+  https://github.com/video-dev/hls.js/issues/7432
 - **Mozilla bug 1140965, "Test file bipbopinit.mp4 contains multiple edits"**
   (the standard MSE test file carries a `media_time = -1` empty edit plus a second
   edit; quotes the single-edit mandate):
