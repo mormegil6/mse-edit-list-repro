@@ -193,6 +193,9 @@ rather than declaring it out of scope:
 - **Safari / WebKit**: a fix landed in WebKit trunk (7 July 2026, `316626@main`).
   No shipping Safari applies it yet (26.5.2 and 27.0 beta 1 still drop it).
   [WebKit bug 316870](https://bugs.webkit.org/show_bug.cgi?id=316870) (my report, [bug 319998](https://bugs.webkit.org/show_bug.cgi?id=319998), was resolved as its duplicate)
+  **Update, 3 August 2026:** confirmed applying the offset correctly in Safari
+  Technology Preview (Release 249, WebKit 21626.1.1) — the trunk fix works as
+  intended in a real build, though it has not reached a shipping release.
 - **Chrome / Blink**: the Chromium issue is assigned, with intent to adapt
   stated, conditional on Safari's rollout; nothing has shipped or changed in a
   released build.

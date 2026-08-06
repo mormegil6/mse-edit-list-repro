@@ -34,7 +34,7 @@ audio media-time&nbsp;4.0&nbsp;s, so <b>applying the offset lands the flash exac
 presentation time&nbsp;4.0&nbsp;s). Dropping it leaves the flash at&nbsp;1.0&nbsp;s, 3&nbsp;seconds before the beep.
 </p>
 
-<p class="note"><b>Safari:</b> WebKit fixed this in trunk (<a href="https://bugs.webkit.org/show_bug.cgi?id=316870">bug&nbsp;316870</a> - the <code>mediasource-sequencemode-append-buffer.html</code> WPT). A shipping stable Safari still shows the pre-fix "dropped" result until the fix rides into a release; use Safari Technology Preview or a WebKit Nightly to see it applied.</p>
+<p class="note"><b>Safari:</b> WebKit fixed this in trunk (<a href="https://bugs.webkit.org/show_bug.cgi?id=316870">bug&nbsp;316870</a> - the <code>mediasource-sequencemode-append-buffer.html</code> WPT). A shipping stable Safari still shows the pre-fix "dropped" result until the fix rides into a release; use Safari Technology Preview or a WebKit Nightly to see it applied — confirmed applying it correctly in Safari Technology Preview Release 249 (WebKit 21626.1.1), tested 3&nbsp;Aug&nbsp;2026.</p>
 
 <button id="go">Start (with sound)</button>
 <span class="note">Watch for the flash, then listen for the beep. Each player prints its two event times below it.
