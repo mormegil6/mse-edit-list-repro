@@ -196,6 +196,9 @@ rather than declaring it out of scope:
   **Update, 3 August 2026:** confirmed applying the offset correctly in Safari
   Technology Preview (Release 249, WebKit 21626.1.1) — the trunk fix works as
   intended in a real build, though it has not reached a shipping release.
+  **Update, 6 August 2026:** retested on the current shipping Safari 26.6
+  (macOS Sequoia 15.7.7, MacBook Pro 2019) — still drops the offset. No
+  shipping release carries the fix yet.
 - **Chrome / Blink**: the Chromium issue is assigned, with intent to adapt
   stated, conditional on Safari's rollout; nothing has shipped or changed in a
   released build.
@@ -268,9 +271,9 @@ buffering.
   and Linux (Debian), on Chrome Stable 150, Beta 151, Dev 152 and Canary 152:
   three operating systems and four release channels, confirmed by the vendor.
 - Firefox 152 applies the offset through MSE (the contrasting behavior).
-- Safari / WebKit: shipping builds drop it under MSE (tested 26.5.2 release and
-  27.0 beta 1); WebKit trunk has since changed to apply it (see the Status
-  section above).
+- Safari / WebKit: shipping builds drop it under MSE (tested 26.5.2 and 26.6
+  releases, and 27.0 beta 1); WebKit trunk has since changed to apply it (see
+  the Status section above).
 - Assets built with ffmpeg 8.1.2.
 
 ## Rebuild the assets
