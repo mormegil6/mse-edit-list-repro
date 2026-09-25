@@ -191,20 +191,33 @@ cross-engine engagement, and the trajectory is toward supporting the offset
 rather than declaring it out of scope:
 
 - **Safari / WebKit**: a fix landed in WebKit trunk (7 July 2026, `316626@main`).
-  No shipping Safari applies it yet (26.5.2 and 27.0 beta 1 still drop it).
+  No shipping Safari applies it yet (26.5.2 and 26.6 drop it, and so does the 27.0 release).
   [WebKit bug 316870](https://bugs.webkit.org/show_bug.cgi?id=316870) (my report, [bug 319998](https://bugs.webkit.org/show_bug.cgi?id=319998), was resolved as its duplicate)
   **Update, 3 August 2026:** confirmed applying the offset correctly in Safari
-  Technology Preview (Release 249, WebKit 21626.1.1) — the trunk fix works as
+  Technology Preview (Release 249, WebKit 21626.1.1): the trunk fix works as
   intended in a real build, though it has not reached a shipping release.
   **Update, 6 August 2026:** retested on the current shipping Safari 26.6
-  (macOS Sequoia 15.7.7, MacBook Pro 2019) — still drops the offset. No
+  (macOS Sequoia 15.7.7, MacBook Pro 2019): still drops the offset. No
   shipping release carries the fix yet.
+  **Update, 14 September 2026:** Safari 27.0 has shipped (build 20625.1.22.18.2,
+  macOS 15.7.9), and it still drops the offset under MSE (`buffered.start` 0,
+  duration 5 s, flash at 1.0 s) while applying it for a plain `<video src>`
+  (duration 8 s, flash at 4.0 s). The 7 July trunk fix is not in it.
 - **Chrome / Blink**: the Chromium issue is assigned, with intent to adapt
   stated, conditional on Safari's rollout; nothing has shipped or changed in a
   released build.
+  **Update, 14 September 2026:** Chrome 152 stable (152.0.7977.76), the milestone
+  the issue targets, still drops it under MSE, and so do Brave 152.0.7977.83 and
+  Edge 152.0.4191.66: `buffered.start` 0, duration 5 s, flash at 1.0 s, against
+  duration 8 s and flash at 4.0 s for a plain `<video src>`. No commits touching
+  the MP4 parser's edit-list handling had landed since June. Chrome 154, now
+  stable, has not been measured here.
   [Chromium 537235698](https://issues.chromium.org/issues/537235698)
 - **Firefox / Gecko**: already applies the offset under MSE (the common
   streaming case); the opposite plain-file behavior is filed separately.
+  **Update, 14 September 2026:** Firefox 155 is unchanged: it applies the offset
+  under MSE (duration 8 s) and drops it for a plain file (duration 5 s, flash at
+  1.195 s).
   [Mozilla 2056945](https://bugzilla.mozilla.org/show_bug.cgi?id=2056945)
 - **The spec / W3C**: open, with agreement that the byte-stream registry should
   be clarified so there is one written answer.
@@ -270,10 +283,10 @@ buffering.
 - **Independently reproduced by Chromium's own triage** across macOS, Windows 11
   and Linux (Debian), on Chrome Stable 150, Beta 151, Dev 152 and Canary 152:
   three operating systems and four release channels, confirmed by the vendor.
-- Firefox 152 applies the offset through MSE (the contrasting behavior).
-- Safari / WebKit: shipping builds drop it under MSE (tested 26.5.2 and 26.6
-  releases, and 27.0 beta 1); WebKit trunk has since changed to apply it (see
-  the Status section above).
+- Firefox 152 applies the offset through MSE (the contrasting behavior); Firefox 155 was measured the same way on 14 September.
+- Safari / WebKit: shipping builds drop it under MSE (tested 26.5.2, 26.6 and
+  the 27.0 release); WebKit trunk has since changed to apply it (see the Status
+  section above).
 - Assets built with ffmpeg 8.1.2.
 
 ## Rebuild the assets
