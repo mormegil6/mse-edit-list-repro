@@ -203,6 +203,7 @@ rather than declaring it out of scope:
   macOS 15.7.9), and it still drops the offset under MSE (`buffered.start` 0,
   duration 5 s, flash at 1.0 s) while applying it for a plain `<video src>`
   (duration 8 s, flash at 4.0 s). The 7 July trunk fix is not in it.
+  **Update, 3 October 2026:** Safari 27.0 (build 20625.1.29.18.28, macOS 15.8) is unchanged over three runs: it drops the offset under MSE (`buffered.start` 0, duration 5 s, flash at 1.0 s) and applies it for a plain `<video src>` (duration 8 s, flash at 4.0 s).
 - **Chrome / Blink**: the Chromium issue is assigned, with intent to adapt
   stated, conditional on Safari's rollout; nothing has shipped or changed in a
   released build.
@@ -210,14 +211,15 @@ rather than declaring it out of scope:
   the issue targets, still drops it under MSE, and so do Brave 152.0.7977.83 and
   Edge 152.0.4191.66: `buffered.start` 0, duration 5 s, flash at 1.0 s, against
   duration 8 s and flash at 4.0 s for a plain `<video src>`. No commits touching
-  the MP4 parser's edit-list handling had landed since June. Chrome 154, now
-  stable, has not been measured here.
+  the MP4 parser's edit-list handling had landed since June.
+  **Update, 3 October 2026:** Chrome 154.0.8037.58, Brave 154.1.96.59 and Edge 154.0.4258.48 are unchanged over three runs each: MSE drops the offset (`buffered.start` 0, duration 5 s, flash at 1.0 s) and a plain `<video src>` applies it (duration 8 s, flash at 4.0 s). The Chromium GitHub mirror shows no commit touching edit-list handling since 14 September, and `media/formats/mp4/track_run_iterator.cc` has none since 10 July.
   [Chromium 537235698](https://issues.chromium.org/issues/537235698)
 - **Firefox / Gecko**: already applies the offset under MSE (the common
   streaming case); the opposite plain-file behavior is filed separately.
   **Update, 14 September 2026:** Firefox 155 is unchanged: it applies the offset
   under MSE (duration 8 s) and drops it for a plain file (duration 5 s, flash at
   1.195 s).
+  **Update, 3 October 2026:** Firefox 157.0 is unchanged over three runs: it applies the offset under MSE (duration 8 s) and drops it for a plain file (duration 5 s, flash at 1.195 to 1.229 s).
   [Mozilla 2056945](https://bugzilla.mozilla.org/show_bug.cgi?id=2056945)
 - **The spec / W3C**: open, with agreement that the byte-stream registry should
   be clarified so there is one written answer.
