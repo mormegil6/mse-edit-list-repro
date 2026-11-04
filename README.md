@@ -213,6 +213,7 @@ rather than declaring it out of scope:
   duration 8 s and flash at 4.0 s for a plain `<video src>`. No commits touching
   the MP4 parser's edit-list handling had landed since June.
   **Update, 3 October 2026:** Chrome 154.0.8037.58, Brave 154.1.96.59 and Edge 154.0.4258.48 are unchanged over three runs each: MSE drops the offset (`buffered.start` 0, duration 5 s, flash at 1.0 s) and a plain `<video src>` applies it (duration 8 s, flash at 4.0 s). The Chromium GitHub mirror shows no commit touching edit-list handling since 14 September, and `media/formats/mp4/track_run_iterator.cc` has none since 10 July.
+  **Update, 4 November 2026:** fixed in Chromium main. Dale Curtis's change [8561625](https://chromium-review.googlesource.com/c/chromium/src/+/8561625) (`2d05297`) makes the MP4 parser apply a leading empty edit, scaled from the movie timescale to the track timescale. It sits behind the `kMP4ApplyEmptyEditList` feature, enabled by default, which is a killswitch to be removed after M159 reaches stable. No released Chrome, Brave or Edge carries it yet, so the measurements above still hold for every shipping build.
   [Chromium 537235698](https://issues.chromium.org/issues/537235698)
 - **Firefox / Gecko**: already applies the offset under MSE (the common
   streaming case); the opposite plain-file behavior is filed separately.
@@ -228,7 +229,7 @@ rather than declaring it out of scope:
   the ambiguous edit, was patched to stop writing it at all: **PR #53, merged**
   (two further contributions, #54 and #55, also merged).
 
-Nothing is fixed in a shipping browser yet; the list above is where each engine
+The fix exists in Chromium main (4 November 2026) and in WebKit trunk, but nothing is fixed in a shipping browser yet; the list above is where each engine
 and the spec currently stand.
 
 ## Why it matters
