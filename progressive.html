@@ -34,7 +34,10 @@ only a fraction of it (flash at 1.2&nbsp;s; <code>duration</code> 5.0&nbsp;s at 
 file gives in the movie timescale (1000), in the video track's timescale (15360), so 3000 ticks come out as
 0.195&nbsp;s instead of 3.0&nbsp;s
 (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2082877">Mozilla 2082877</a>, fixed in mp4parse-rust
-but not yet in a Firefox release). Firefox <i>does</i> apply the full offset through MSE (see
+but not yet in a Firefox release). Mozilla's triage on
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2056945">2056945</a> adds that the reported
+<code>duration</code> is a second, separate problem, which that fix does not change: the track duration leaves out the
+empty edit, so it reads 5.0&nbsp;s at load. Firefox <i>does</i> apply the full offset through MSE (see
 <a href="./">the MSE demo</a>), so this is a difference between Firefox's own two paths.
 </p>
 
@@ -50,15 +53,18 @@ const st = { duration: null, flashMediaTime: null, flashCurrentTime: null, beepC
 function render() {
   const V = document.getElementById('verdict');
   if (st.duration == null || st.flashMediaTime == null) return;
-  // "applied" iff the empty edit was added to the timeline (duration ~8, flash ~4).
-  const appliedOffset = st.duration > (FLASH_MEDIA_S + SHIFT_S + 5) * 0.5 + 1; // > ~6.5
   // How far the flash moved from its position in the media: 3.0 s when the edit is applied in full,
   // 0 when it is dropped, anything in between when it is applied at the wrong scale.
   const offsetS = +(st.flashMediaTime - FLASH_MEDIA_S).toFixed(3);
-  window.__prog = { duration: st.duration, flashMediaTime: st.flashMediaTime, flashCurrentTime: st.flashCurrentTime, beepCurrentTime: st.beepCurrentTime, applied: appliedOffset, offsetS: offsetS };
+  // "applied" iff the picture moved by the whole empty edit (flash ~4.0 s, on the beep). The duration
+  // is reported separately: a browser can place the picture right and still report 5.0 s at load.
+  const appliedOffset = offsetS > SHIFT_S - 0.1;
+  const durationIncludesEdit = st.duration > (FLASH_MEDIA_S + SHIFT_S + 5) * 0.5 + 1; // > ~6.5
+  window.__prog = { duration: st.duration, flashMediaTime: st.flashMediaTime, flashCurrentTime: st.flashCurrentTime, beepCurrentTime: st.beepCurrentTime, applied: appliedOffset, durationIncludesEdit: durationIncludesEdit, offsetS: offsetS };
   if (appliedOffset) {
     V.innerHTML = '<span class="ok">This browser applied the empty-edit offset in progressive playback.</span> '
-      + '<code>duration</code> = ' + st.duration + ' s, flash at ' + st.flashMediaTime + ' s (on the beep).';
+      + 'Flash at ' + st.flashMediaTime + ' s (on the beep). <code>duration</code> = ' + st.duration + ' s at load'
+      + (durationIncludesEdit ? '.' : ', which leaves out the 3.0 s empty edit (the duration is reported separately from the picture offset).');
   } else if (offsetS > 0.05) {
     V.innerHTML = '<span class="bug">This browser applied only part of the empty-edit offset in progressive playback.</span> '
       + 'The picture is delayed by ' + offsetS.toFixed(2) + ' s instead of ' + SHIFT_S.toFixed(1) + ' s: '
