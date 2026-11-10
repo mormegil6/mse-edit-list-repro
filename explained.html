@@ -253,7 +253,7 @@ reports) are still here:
       <td class="cell cell-good"><span class="t">follows</span><span class="s">in sync</span></td></tr>
     <tr><th>Firefox</th>
       <td class="cell cell-good"><span class="t">follows</span><span class="s">in sync</span></td>
-      <td class="cell cell-bad"><span class="t">drops</span><span class="s">3 s early</span></td></tr>
+      <td class="cell cell-bad"><span class="t">scales it wrong</span><span class="s">2.8 s early</span></td></tr>
     <tr><th>Safari</th>
       <td class="cell cell-bad"><span class="t">drops*</span><span class="s">shipping; trunk-fixed, unshipped</span></td>
       <td class="cell cell-good"><span class="t">follows</span><span class="s">in sync</span></td></tr>
@@ -268,10 +268,13 @@ Safari Technology Preview Release&nbsp;249 (WebKit 21626.1.1), tested 3&nbsp;Aug
 intended, not shipped (see below). So on today’s browsers the streaming demo is wrong in <b>both</b>
 Chrome and Safari.</p>
 <p><b>Chrome and Firefox are mirror images</b>, and today <b>no shipping engine</b> handles the same
-file the same way in both modes. There was no single “broken browser” to point at, because there was
-no agreed, written-down answer for what <i>should</i> happen. That’s what turned a bug report into an
-<b>interoperability question</b>: not “who’s wrong,” but “what’s the correct behaviour, and can
-everyone converge on it.”</p>
+file the same way in both modes. For streaming there was no single “broken browser” to point at, because
+there was no agreed, written-down answer for what <i>should</i> happen. That’s what turned a bug report
+into an <b>interoperability question</b>: not “who’s wrong,” but “what’s the correct behaviour, and can
+everyone converge on it.” Firefox’s plain-file row is a different case: the spec is explicit there, and
+Firefox reads the edit’s duration in the wrong timescale (0.2 s instead of 3 s;
+<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2082877" target="_blank" rel="noopener">Mozilla 2082877</a>),
+a plain implementation bug that is already fixed upstream and not yet in a Firefox release.</p>
 
 <h2>Why it matters</h2>
 <p>This is one concrete way a live or on-demand video stream can sit out of lip-sync in the
@@ -301,8 +304,8 @@ engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;
       shipped or fixed yet.</span>
     <a class="pill prog" href="https://issues.chromium.org/issues/537235698" target="_blank" rel="noopener">assigned →</a></li>
   <li><span class="who">Firefox</span>
-    <span class="st">Already follows it under streaming (the common case); the opposite plain-file
-      behaviour is filed separately.</span>
+    <span class="st">Already follows it under streaming (the common case); the plain-file case
+      is a timescale bug, filed separately and already fixed upstream.</span>
     <a class="pill prog" href="https://bugzilla.mozilla.org/show_bug.cgi?id=2056945" target="_blank" rel="noopener">tracked →</a></li>
   <li><span class="who">The spec · W3C</span>
     <span class="st">Open; agreement that the byte-stream registry should be clarified, so there is one

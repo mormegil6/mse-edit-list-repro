@@ -4,7 +4,7 @@
 
 - **Chromium / Blink:** https://issues.chromium.org/issues/537235698
 - **WebKit / Safari:** my report https://bugs.webkit.org/show_bug.cgi?id=319998 (resolved as a duplicate of https://bugs.webkit.org/show_bug.cgi?id=316870, where the fix landed)
-- **Gecko / Firefox** (the mirror-image case, on the plain-file path): https://bugzilla.mozilla.org/show_bug.cgi?id=2056945
+- **Gecko / Firefox** (the plain-file path, where Firefox applies the offset at the wrong scale): https://bugzilla.mozilla.org/show_bug.cgi?id=2056945, with the cause in https://bugzilla.mozilla.org/show_bug.cgi?id=2082877
 - **W3C Media Source #377**, the underlying spec discrepancy: https://github.com/w3c/media-source/issues/377
 
 **Source-side fix (merged upstream):** https://github.com/EnvelopSound/Earshot/pull/53
@@ -82,7 +82,13 @@ A companion page,
 [**`/progressive.html`**](https://mormegil6.github.io/mse-edit-list-repro/progressive.html),
 plays the same file through a plain `<video src>` (no MSE) and shows the opposite
 split: Chromium applies the offset there (`duration` 8.0 s, flash at 4.0 s), while
-Firefox drops it (`duration` 5.0 s, flash at 1.0 s). So Firefox applies this offset
+Firefox applies only a fraction of it (flash at 1.2 s; `duration` 5.0 s at load and
+5.195 s once playback reaches the end). That is a
+timescale bug, not a missing feature: the edit's duration is 3000 ticks of the movie
+timescale (1000), and Firefox reads those ticks in the video track's timescale
+(15360), which makes them 0.195 s instead of 3.0 s
+([Mozilla 2082877](https://bugzilla.mozilla.org/show_bug.cgi?id=2082877), fixed in
+mp4parse-rust, not yet in a Firefox release). So Firefox applies this offset in full
 through MSE but not in progressive playback; Chromium is the reverse.
 
 ## Reproduce locally
@@ -130,19 +136,20 @@ Both players receive the identical encoded media; only the delivery path differs
 The `<video src>` control proves the media is fine outside MSE. In both Chrome and
 Safari, `<video src>` applies the offset on the same file, so the control plays in
 sync right next to the out-of-sync MSE player, which is the point. It is hidden in
-Firefox only, whose progressive `<video src>` path *drops* the offset (a separate
-quirk, opposite to Chrome and Safari); showing it there would only distract. Judge
+Firefox only, whose progressive `<video src>` path applies just a fraction of the
+offset (a timescale bug of its own, opposite to Chrome and Safari); showing it there
+would only distract. Judge
 each player on its own flash-vs-beep, never one player against the other.
 
 The full picture, per engine and delivery path, on the identical bytes (measured;
 "applies" = flash lands on the beep, `duration` 8 s; "drops" = flash 3 s early,
-`duration` 5 s):
+`duration` 5 s; "mis-scaled" = flash about 2.8 s early, `duration` 5 s at load):
 
 | engine | MSE (`appendBuffer`) | non-MSE (`<video src>`) |
 |---|---|---|
 | Chrome / Blink | drops | applies |
 | Safari / WebKit | drops | applies |
-| Firefox / Gecko | applies | drops |
+| Firefox / Gecko | applies | mis-scaled |
 
 *(These are the shipping behaviors reproducible today. Since filing, WebKit trunk
 has changed to apply the offset under MSE; see [Status](#status-as-of-23-july-2026)
@@ -216,11 +223,12 @@ rather than declaring it out of scope:
   **Update, 4 November 2026:** fixed in Chromium main. Dale Curtis's change [8561625](https://chromium-review.googlesource.com/c/chromium/src/+/8561625) (`2d05297`) makes the MP4 parser apply a leading empty edit, scaled from the movie timescale to the track timescale. It sits behind the `kMP4ApplyEmptyEditList` feature, enabled by default, which is a killswitch to be removed after M159 reaches stable. No released Chrome, Brave or Edge carries it yet, so the measurements above still hold for every shipping build.
   [Chromium 537235698](https://issues.chromium.org/issues/537235698)
 - **Firefox / Gecko**: already applies the offset under MSE (the common
-  streaming case); the opposite plain-file behavior is filed separately.
+  streaming case); the plain-file behavior is a timescale bug, filed separately.
   **Update, 14 September 2026:** Firefox 155 is unchanged: it applies the offset
   under MSE (duration 8 s) and drops it for a plain file (duration 5 s, flash at
   1.195 s).
   **Update, 3 October 2026:** Firefox 157.0 is unchanged over three runs: it applies the offset under MSE (duration 8 s) and drops it for a plain file (duration 5 s, flash at 1.195 to 1.229 s).
+  **Update, 10 November 2026:** the plain-file case is not a dropped offset, as the entries above say. On Firefox 159.0.1 the flash lands at 1.195 s over three runs, and `duration` is 5 s at load but 5.195 s once playback reaches the end (the same 0.195 s added to the end), which is the 3000-tick edit read in the video timescale: 3000/15360 = 0.195 s. [Mozilla 2082877](https://bugzilla.mozilla.org/show_bug.cgi?id=2082877) is that bug, found with another file; its fix, [mp4parse-rust #459](https://github.com/mozilla/mp4parse-rust/pull/459), merged on 27 October and is not yet in a Firefox release. The 1.195 s readings in the two entries above match it. The MSE result is unaffected. To re-run once a Firefox carries the fix: flash at 4.0 s and duration 8 s would mean the plain-file path now agrees with MSE.
   [Mozilla 2056945](https://bugzilla.mozilla.org/show_bug.cgi?id=2056945)
 - **The spec / W3C**: open, with agreement that the byte-stream registry should
   be clarified so there is one written answer.

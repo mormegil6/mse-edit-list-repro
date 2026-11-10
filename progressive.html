@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
-<title>Progressive MP4: empty-edit (elst) presentation offset not applied in Firefox</title>
+<title>Progressive MP4: empty-edit (elst) presentation offset applied at the wrong scale in Firefox</title>
 <style>
   body { font: 15px/1.55 system-ui, sans-serif; max-width: 780px; margin: 24px auto; padding: 0 16px; color: #111; background: #fff; }
   h1 { font-size: 20px; margin-bottom: 4px; }
@@ -29,9 +29,13 @@ flash onto the beep (both at 4.0&nbsp;s) and makes the total <code>duration</cod
 leaves the flash at 1.0&nbsp;s and <code>duration</code> 5.0&nbsp;s (media length only).
 </p>
 <p class="note">
-<b>Chromium</b> applies it here (<code>duration</code> 8.0&nbsp;s, flash at 4.0&nbsp;s). <b>Firefox</b> does
-not (<code>duration</code> 5.0&nbsp;s, flash at ~1.0&nbsp;s). Note Firefox <i>does</i> apply the same offset
-through MSE (see <a href="./">the MSE demo</a>), so this is a difference between Firefox's own two paths.
+<b>Chromium</b> applies it here (<code>duration</code> 8.0&nbsp;s, flash at 4.0&nbsp;s). <b>Firefox</b> applies
+only a fraction of it (flash at 1.2&nbsp;s; <code>duration</code> 5.0&nbsp;s at load, 5.195&nbsp;s once playback reaches the end): it reads the edit's duration, which the
+file gives in the movie timescale (1000), in the video track's timescale (15360), so 3000 ticks come out as
+0.195&nbsp;s instead of 3.0&nbsp;s
+(<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2082877">Mozilla 2082877</a>, fixed in mp4parse-rust
+but not yet in a Firefox release). Firefox <i>does</i> apply the full offset through MSE (see
+<a href="./">the MSE demo</a>), so this is a difference between Firefox's own two paths.
 </p>
 
 <button id="go">Start (with sound)</button>
@@ -48,10 +52,18 @@ function render() {
   if (st.duration == null || st.flashMediaTime == null) return;
   // "applied" iff the empty edit was added to the timeline (duration ~8, flash ~4).
   const appliedOffset = st.duration > (FLASH_MEDIA_S + SHIFT_S + 5) * 0.5 + 1; // > ~6.5
-  window.__prog = { duration: st.duration, flashMediaTime: st.flashMediaTime, flashCurrentTime: st.flashCurrentTime, beepCurrentTime: st.beepCurrentTime, applied: appliedOffset };
+  // How far the flash moved from its position in the media: 3.0 s when the edit is applied in full,
+  // 0 when it is dropped, anything in between when it is applied at the wrong scale.
+  const offsetS = +(st.flashMediaTime - FLASH_MEDIA_S).toFixed(3);
+  window.__prog = { duration: st.duration, flashMediaTime: st.flashMediaTime, flashCurrentTime: st.flashCurrentTime, beepCurrentTime: st.beepCurrentTime, applied: appliedOffset, offsetS: offsetS };
   if (appliedOffset) {
     V.innerHTML = '<span class="ok">This browser applied the empty-edit offset in progressive playback.</span> '
       + '<code>duration</code> = ' + st.duration + ' s, flash at ' + st.flashMediaTime + ' s (on the beep).';
+  } else if (offsetS > 0.05) {
+    V.innerHTML = '<span class="bug">This browser applied only part of the empty-edit offset in progressive playback.</span> '
+      + 'The picture is delayed by ' + offsetS.toFixed(2) + ' s instead of ' + SHIFT_S.toFixed(1) + ' s: '
+      + 'flash at ' + st.flashMediaTime + ' s (' + (BEEP_PRES_S - st.flashMediaTime).toFixed(1) + ' s before the beep), '
+      + '<code>duration</code> = ' + st.duration + ' s at load (Firefox raises it to 5.195 s when playback reaches the end).';
   } else {
     V.innerHTML = '<span class="bug">This browser dropped the empty-edit offset in progressive playback.</span> '
       + '<code>duration</code> = ' + st.duration + ' s (media length only; the 3.0 s empty edit was not added), '

@@ -68,8 +68,9 @@ const FLASH_MEDIA_S = 1.0;      // flash position in the video media
 const BEEP_PRES_S = 4.0;        // audio beep presentation time (currentTime); fixed reference
 // Show the non-MSE control player everywhere EXCEPT Firefox. Chrome and Safari
 // both apply this offset in <video src>, so the control sits in sync next to the
-// out-of-sync MSE player (the point). Firefox's progressive path drops the offset,
-// which would confuse, so it is hidden there with a note.
+// out-of-sync MSE player (the point). Firefox's progressive path applies only a
+// fraction of the offset (a timescale bug), which would confuse, so it is hidden
+// there with a note.
 const IS_FIREFOX = /Firefox/.test(navigator.userAgent);
 
 const VMIME = 'video/mp4; codecs="avc1.42c00d"';
@@ -202,8 +203,8 @@ document.getElementById('go').onclick = () => {
     document.getElementById('tlD').style.display = 'none';
     const n = document.getElementById('noteD');
     n.style.display = 'block';
-    n.textContent = 'The non-MSE control is hidden in Firefox only. Firefox’s progressive video.src path drops '
-      + 'this same offset (a separate quirk, opposite to Chrome and Safari, and unrelated to the MSE behavior on '
+    n.textContent = 'The non-MSE control is hidden in Firefox only. Firefox’s progressive video.src path applies only '
+      + 'a fraction of this same offset (a timescale bug of its own, Mozilla 2082877, unrelated to the MSE behavior on '
       + 'the left), so it would only distract here. The point of this page is the MSE player, which Firefox handles '
       + 'correctly. Chrome and Safari show the control, where it plays in sync next to the out-of-sync MSE player.';
   }
