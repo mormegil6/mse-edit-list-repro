@@ -10,7 +10,7 @@
 **Source-side fix (merged upstream):** https://github.com/EnvelopSound/Earshot/pull/53
 (aligning the track starts at the packager so no edit list is written at all)
 
-Per-engine status is in the [Status](#status-as-of-23-july-2026) section below.
+Per-engine status is in the [Status](#status) section below.
 
 Minimal, self-contained reproduction of an interoperability difference. An fMP4
 initialization segment whose video track carries a single leading **empty edit**
@@ -151,9 +151,7 @@ The full picture, per engine and delivery path, on the identical bytes (measured
 | Safari / WebKit | drops | applies |
 | Firefox / Gecko | applies | mis-scaled |
 
-*(These are the shipping behaviors reproducible today. Since filing, WebKit trunk
-has changed to apply the offset under MSE; see [Status](#status-as-of-23-july-2026)
-below.)*
+*(These are the shipping behaviors reproducible today. Since filing, WebKit trunk and Chromium main have changed to apply the offset under MSE, and neither change is in a released browser yet; see [Status](#status) below.)*
 
 Every engine is internally inconsistent between its own two paths, and no two
 engines agree on both. In Chrome and Safari, MSE is the deviant path: it drops an
@@ -190,12 +188,9 @@ test file `bipbopinit.mp4` carries the same `media_time = -1` empty edit (see th
 Mozilla reference below). That is the interoperability gap worth resolving, either
 by supporting it in Chromium or by documenting that it is out of scope.
 
-### Status (as of 23 July 2026)
+### Status
 
-Filed as an interoperability clarification (observation, evidence, question)
-against every engine and the spec at once. Since then the question has drawn
-cross-engine engagement, and the trajectory is toward supporting the offset
-rather than declaring it out of scope:
+Filed as an interoperability clarification (observation, evidence, question) against every engine and the spec at once, on 21 to 23 July 2026. Since then WebKit and Chromium have both changed their MSE code to apply the offset, and neither change is in a released browser yet. Dated entries, oldest first:
 
 - **Safari / WebKit**: a fix landed in WebKit trunk (7 July 2026, `316626@main`).
   No shipping Safari applies it yet (26.5.2 and 26.6 drop it, and so does the 27.0 release).
@@ -211,6 +206,7 @@ rather than declaring it out of scope:
   duration 5 s, flash at 1.0 s) while applying it for a plain `<video src>`
   (duration 8 s, flash at 4.0 s). The 7 July trunk fix is not in it.
   **Update, 3 October 2026:** Safari 27.0 (build 20625.1.29.18.28, macOS 15.8) is unchanged over three runs: it drops the offset under MSE (`buffered.start` 0, duration 5 s, flash at 1.0 s) and applies it for a plain `<video src>` (duration 8 s, flash at 4.0 s).
+  **Update, 15 November 2026:** on 30 October a WebKit engineer wrote in [w3c/media-source #377](https://github.com/w3c/media-source/issues/377) that the fix "was in Safari 27 which was released in September". It is not in the Safari 27 I can measure: Safari 27.2 (build 20625.2.8.18.4, macOS 15.8.2) drops the offset under MSE (`buffered.start` 0, duration 5.0 s, flash at 1.0 s) and applies it for a plain `<video src>` (duration 8.0 s, flash at 4.033 s), measured 11 November. On [wpt.fyi](https://wpt.fyi/results/media-source/SourceBuffer-mp4-elst-empty-edit.html?label=master&label=experimental), released Safari 27.0 and 27.2 pass none of the three subtests of the 2016 test `mediasource-sequencemode-append-buffer.html` and only the setup subtest of `SourceBuffer-mp4-elst-empty-edit.html`, the test in which the empty edit is the only variable. Safari Technology Preview 256 passes 3 of 3 and 3 of 4: it fails the case where a non-zero `media_time` edit follows the empty edit.
 - **Chrome / Blink**: the Chromium issue is assigned, with intent to adapt
   stated, conditional on Safari's rollout; nothing has shipped or changed in a
   released build.
@@ -221,6 +217,7 @@ rather than declaring it out of scope:
   the MP4 parser's edit-list handling had landed since June.
   **Update, 3 October 2026:** Chrome 154.0.8037.58, Brave 154.1.96.59 and Edge 154.0.4258.48 are unchanged over three runs each: MSE drops the offset (`buffered.start` 0, duration 5 s, flash at 1.0 s) and a plain `<video src>` applies it (duration 8 s, flash at 4.0 s). The Chromium GitHub mirror shows no commit touching edit-list handling since 14 September, and `media/formats/mp4/track_run_iterator.cc` has none since 10 July.
   **Update, 4 November 2026:** fixed in Chromium main. Dale Curtis's change [8561625](https://chromium-review.googlesource.com/c/chromium/src/+/8561625) (`2d05297`) makes the MP4 parser apply a leading empty edit, scaled from the movie timescale to the track timescale. It sits behind the `kMP4ApplyEmptyEditList` feature, enabled by default, which is a killswitch to be removed after M159 reaches stable. No released Chrome, Brave or Edge carries it yet, so the measurements above still hold for every shipping build.
+  **Update, 15 November 2026:** Google's triage verified the fix on Chrome 159.0.8144.0 (Windows 11, macOS 15.8.1, Linux) on 5 November. Canary 160.0.8163.0 (macOS, arm64) passes `SourceBuffer-mp4-elst-empty-edit.html` 4 of 4, against 1 of 4 on stable 157.0.8103.79. It still fails the first subtest of `mediasource-sequencemode-append-buffer.html`, whose file carries a 0.095 s empty edit, with the same message as a build without the fix (`expected 0.095 +/- 0.001 but got 0`), so the edit may not be applied when the SourceBuffer is in `sequence` mode. Reported in [comment 9](https://issues.chromium.org/issues/537235698#comment9). Stable Chrome 157 does not carry the fix.
   [Chromium 537235698](https://issues.chromium.org/issues/537235698)
 - **Firefox / Gecko**: already applies the offset under MSE (the common
   streaming case); the plain-file behavior is a timescale bug, filed separately.
@@ -234,13 +231,13 @@ rather than declaring it out of scope:
   [Mozilla 2056945](https://bugzilla.mozilla.org/show_bug.cgi?id=2056945)
 - **The spec / W3C**: open, with agreement that the byte-stream registry should
   be clarified so there is one written answer.
+  **Update, 15 November 2026:** I corrected two of my 23 July comments there. Firefox's plain-file path applies the edit at the wrong scale rather than dropping it, and `mediasource-sequencemode-append-buffer.html` does not settle the question, because it fails for three independent reasons (WebKit `316626@main`); the direct test is `SourceBuffer-mp4-elst-empty-edit.html`, added with Chromium's fix. Firefox, Chromium main and WebKit trunk now all apply a plain leading empty edit under MSE, but the edges differ (Chromium apparently not in `sequence` mode, WebKit not when a non-zero `media_time` edit follows), which is the case for writing the registry text.
   [w3c/media-source #377](https://github.com/w3c/media-source/issues/377)
 - **Root cause (upstream)**: Envelop Earshot, the streaming server that emitted
   the ambiguous edit, was patched to stop writing it at all: **PR #53, merged**
   (two further contributions, #54 and #55, also merged).
 
-The fix exists in Chromium main (4 November 2026) and in WebKit trunk, but nothing is fixed in a shipping browser yet; the list above is where each engine
-and the spec currently stand.
+The fix exists in Chromium main (4 November 2026, in Chrome 159 and later pre-release builds) and in WebKit trunk (in Safari Technology Preview since release 249), but no released Chrome or Safari carries it yet; the list above is where each engine and the spec currently stand.
 
 ## Why it matters
 
@@ -257,6 +254,11 @@ buffering.
 
 - **W3C, Bug 26066, "Clarify edit list requirements"** (the mandate quoted above):
   https://dvcs.w3.org/hg/html-media/rev/0505b9684488
+- **WPT `SourceBuffer-mp4-elst-empty-edit.html`**, added with Chromium's fix, in which the empty edit is the only variable; the direct conformance test for this report:
+  https://wpt.live/media-source/SourceBuffer-mp4-elst-empty-edit.html
+  (results per browser: https://wpt.fyi/results/media-source/SourceBuffer-mp4-elst-empty-edit.html?label=master&label=experimental)
+- **WPT `mediasource-sequencemode-append-buffer.html`** (2016), whose media file carries a 0.095 s empty edit. It fails for several independent reasons (WebKit `316626@main`), so a failure there does not by itself mean a browser dropped the edit:
+  https://wpt.live/media-source/mediasource-sequencemode-append-buffer.html
 - **hls.js #7432, "Audio start timestamp offset in fMP4 stream is ignored"**
   (Chrome 138, MSE; audio starts at 0 instead of the 3 s offset in fMP4, correct
   in TS). The same mechanism as this report, on the audio track. The asset's init
@@ -297,9 +299,7 @@ buffering.
   and Linux (Debian), on Chrome Stable 150, Beta 151, Dev 152 and Canary 152:
   three operating systems and four release channels, confirmed by the vendor.
 - Firefox 152 applies the offset through MSE (the contrasting behavior); Firefox 155 was measured the same way on 14 September.
-- Safari / WebKit: shipping builds drop it under MSE (tested 26.5.2, 26.6 and
-  the 27.0 release); WebKit trunk has since changed to apply it (see the Status
-  section above).
+- Safari / WebKit: shipping builds drop it under MSE (tested 26.5.2, 26.6, 27.0 and 27.2); WebKit trunk has since changed to apply it (see the Status section above).
 - Assets built with ffmpeg 8.1.2.
 
 ## Rebuild the assets

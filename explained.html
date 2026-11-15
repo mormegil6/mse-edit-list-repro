@@ -259,14 +259,14 @@ reports) are still here:
       <td class="cell cell-good"><span class="t">follows</span><span class="s">in sync</span></td></tr>
   </tbody>
 </table>
-<p class="small">*Every <b>shipping</b> Safari still drops the offset under streaming: Safari 26.5.2 and
-26.6 (releases) and 27.0 beta&nbsp;1, as of 6&nbsp;Aug&nbsp;2026. WebKit’s fix landed in <b>trunk</b>
+<p class="small">*Every <b>released</b> Safari still drops the offset under streaming: 26.5.2, 26.6, 27.0
+and 27.2, the last measured 11&nbsp;Nov&nbsp;2026. WebKit’s fix landed in <b>trunk</b>
 on 7&nbsp;Jul&nbsp;2026 (my report <a href="https://bugs.webkit.org/show_bug.cgi?id=319998" target="_blank" rel="noopener">bug&nbsp;319998</a>,
 resolved as a duplicate of <a href="https://bugs.webkit.org/show_bug.cgi?id=316870" target="_blank" rel="noopener">bug&nbsp;316870</a>
-where the fix landed, 316626@main) but is not in any shipping release or beta yet; confirmed applying correctly in
-Safari Technology Preview Release&nbsp;249 (WebKit 21626.1.1), tested 3&nbsp;Aug&nbsp;2026. Chrome also still drops it today; a fix is
-intended, not shipped (see below). So on today’s browsers the streaming demo is wrong in <b>both</b>
-Chrome and Safari.</p>
+where the fix landed, 316626@main) and has been in Safari Technology Preview since Release&nbsp;249
+(confirmed applying it correctly on 3&nbsp;Aug&nbsp;2026). Stable Chrome also still drops it: Chrome’s fix
+landed on 4&nbsp;Nov&nbsp;2026 and is in pre-release builds only (see below). So on today’s released
+browsers the streaming demo is wrong in <b>both</b> Chrome and Safari.</p>
 <p><b>Chrome and Firefox are mirror images</b>, and today <b>no shipping engine</b> handles the same
 file the same way in both modes. For streaming there was no single “broken browser” to point at, because
 there was no agreed, written-down answer for what <i>should</i> happen. That’s what turned a bug report
@@ -287,29 +287,30 @@ the spec at once.</p>
 
 <h2>Where it stands</h2>
 <p>Filed as an interoperability clarification (observation, evidence, question), against every
-engine and the spec at once, rather than as an accusation. Status as of 23&nbsp;July&nbsp;2026:</p>
+engine and the spec at once, rather than as an accusation. Status as of 15&nbsp;November&nbsp;2026:</p>
 <ul class="rec">
   <li><span class="who">Safari · WebKit</span>
     <span class="st">My report (bug&nbsp;319998) was resolved as a duplicate of an earlier WebKit
-      bug&nbsp;316870, where the fix landed in <b>trunk</b> (7&nbsp;Jul&nbsp;2026, 316626@main). Not in
-      any shipping Safari yet; 26.5.2, 26.6, and 27.0&nbsp;beta&nbsp;1 all still drop it (26.6 retested
-      6&nbsp;Aug&nbsp;2026). Confirmed applying correctly in Safari Technology Preview Release&nbsp;249
-      (WebKit 21626.1.1), tested 3&nbsp;Aug&nbsp;2026.</span>
+      bug&nbsp;316870, where the fix landed in <b>trunk</b> (7&nbsp;Jul&nbsp;2026, 316626@main). In Safari
+      Technology Preview since Release&nbsp;249, but in no released Safari: 26.5.2, 26.6, 27.0 and 27.2
+      all still drop it (27.2 measured 11&nbsp;Nov&nbsp;2026).</span>
     <span class="pillcol">
       <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=319998" target="_blank" rel="noopener">my report →</a>
       <a class="pill prog" href="https://bugs.webkit.org/show_bug.cgi?id=316870" target="_blank" rel="noopener">actual fix →</a>
     </span></li>
   <li><span class="who">Chrome</span>
-    <span class="st">Issue assigned; intent to adapt stated, conditional on Safari’s rollout. Nothing
-      shipped or fixed yet.</span>
-    <a class="pill prog" href="https://issues.chromium.org/issues/537235698" target="_blank" rel="noopener">assigned →</a></li>
+    <span class="st">Fixed on 4&nbsp;Nov&nbsp;2026 and verified by Google on Chrome&nbsp;159, a pre-release
+      build; stable Chrome does not have it yet. One possible gap remains: the edit may not be applied
+      in MSE’s <i>sequence</i> append mode.</span>
+    <a class="pill prog" href="https://issues.chromium.org/issues/537235698" target="_blank" rel="noopener">fixed, unreleased →</a></li>
   <li><span class="who">Firefox</span>
     <span class="st">Already follows it under streaming (the common case); the plain-file case
       is a timescale bug, filed separately and already fixed upstream.</span>
     <a class="pill prog" href="https://bugzilla.mozilla.org/show_bug.cgi?id=2056945" target="_blank" rel="noopener">tracked →</a></li>
   <li><span class="who">The spec · W3C</span>
     <span class="st">Open; agreement that the byte-stream registry should be clarified, so there is one
-      written answer.</span>
+      written answer. All three engines now apply the plain case in their source code, but they still
+      differ at the edges, which is the reason to write the answer down.</span>
     <a class="pill prog" href="https://github.com/w3c/media-source/issues/377" target="_blank" rel="noopener">open →</a></li>
   <li><span class="who">Root cause, upstream</span>
     <span class="st">Not a bug: the streaming server (Envelop Earshot) wrote a perfectly legal flag that
