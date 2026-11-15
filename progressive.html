@@ -29,22 +29,22 @@ flash onto the beep (both at 4.0&nbsp;s) and makes the total <code>duration</cod
 leaves the flash at 1.0&nbsp;s and <code>duration</code> 5.0&nbsp;s (media length only).
 </p>
 <p class="note">
-<a href="?file=eqts">With <code>?file=eqts</code></a> the page plays <code>plain-eqts.mp4</code> instead: the same
-file with the movie timescale set to 15360, equal to the video track's, and every duration that the format
-counts in movie ticks rescaled to match (19 bytes differ). A browser that reads the edit in the track's
-timescale shows the flash at 1.195&nbsp;s with <code>plain.mp4</code> and at 4.0&nbsp;s with this file.
-</p>
-<p class="note">
 <b>Chromium</b> applies it here (<code>duration</code> 8.0&nbsp;s, flash at 4.0&nbsp;s). <b>Firefox</b> applies
 only a fraction of it (flash at 1.2&nbsp;s; <code>duration</code> 5.0&nbsp;s at load, 5.195&nbsp;s once playback reaches the end): it reads the edit's duration, which the
 file gives in the movie timescale (1000), in the video track's timescale (15360), so 3000 ticks come out as
 0.195&nbsp;s instead of 3.0&nbsp;s
 (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2082877">Mozilla 2082877</a>, fixed in mp4parse-rust
-but not yet in a Firefox release). Mozilla's triage on
+but not yet in any Firefox build, Nightly included). Mozilla's triage on
 <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2056945">2056945</a> adds that the reported
 <code>duration</code> is a second, separate problem, which that fix does not change: the track duration leaves out the
 empty edit, so it reads 5.0&nbsp;s at load. Firefox <i>does</i> apply the full offset through MSE (see
 <a href="./">the MSE demo</a>), so this is a difference between Firefox's own two paths.
+</p>
+<p class="note">
+<a href="?file=eqts">With <code>?file=eqts</code></a> the page plays <code>plain-eqts.mp4</code> instead: the same
+file with the movie timescale set to 15360, equal to the video track's, and every duration that the format
+counts in movie ticks rescaled to match (19 bytes differ). A browser that reads the edit in the track's
+timescale shows the flash at 1.195&nbsp;s with <code>plain.mp4</code> and at 4.0&nbsp;s with this file.
 </p>
 
 <button id="go">Start (with sound)</button>
