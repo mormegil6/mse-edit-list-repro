@@ -29,6 +29,12 @@ flash onto the beep (both at 4.0&nbsp;s) and makes the total <code>duration</cod
 leaves the flash at 1.0&nbsp;s and <code>duration</code> 5.0&nbsp;s (media length only).
 </p>
 <p class="note">
+<a href="?file=eqts">With <code>?file=eqts</code></a> the page plays <code>plain-eqts.mp4</code> instead: the same
+file with the movie timescale set to 15360, equal to the video track's, and every duration that the format
+counts in movie ticks rescaled to match (19 bytes differ). A browser that reads the edit in the track's
+timescale shows the flash at 1.195&nbsp;s with <code>plain.mp4</code> and at 4.0&nbsp;s with this file.
+</p>
+<p class="note">
 <b>Chromium</b> applies it here (<code>duration</code> 8.0&nbsp;s, flash at 4.0&nbsp;s). <b>Firefox</b> applies
 only a fraction of it (flash at 1.2&nbsp;s; <code>duration</code> 5.0&nbsp;s at load, 5.195&nbsp;s once playback reaches the end): it reads the edit's duration, which the
 file gives in the movie timescale (1000), in the video track's timescale (15360), so 3000 ticks come out as
@@ -77,10 +83,14 @@ function render() {
   }
 }
 
+// ?file=eqts plays plain-eqts.mp4: the same file with the movie timescale set equal
+// to the video track's (15360), so an edit read in the wrong timescale reads right.
+const FILE = new URLSearchParams(location.search).get('file') === 'eqts' ? 'plain-eqts.mp4' : 'plain.mp4';
+
 document.getElementById('go').onclick = async () => {
   const v = document.getElementById('v'), tl = document.getElementById('tl');
   v.muted = false; v.volume = 1;
-  const buf = await fetch('plain.mp4').then(r => r.arrayBuffer());
+  const buf = await fetch(FILE).then(r => r.arrayBuffer());
   v.src = URL.createObjectURL(new Blob([buf], { type: 'video/mp4' }));
   v.addEventListener('loadedmetadata', () => { st.duration = +v.duration.toFixed(3); render(); }, { once: true });
   const c = document.createElement('canvas'); c.width = 32; c.height = 24;
